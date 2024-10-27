@@ -8,5 +8,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::post('/login', [AuthenticationController::class, 'login']);
-Route::post('/register', [AuthenticationController::class, 'register']);
+Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->middleware('auth:sanctum');

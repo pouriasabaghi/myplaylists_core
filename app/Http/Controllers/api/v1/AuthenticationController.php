@@ -14,13 +14,13 @@ class AuthenticationController extends Controller
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'exists:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8'],
         ]);
 
         if (Auth::attempt($credentials)) {
             return response()->json([
                 'message' => 'User logged in successfully',
-                'success' => false,
+                'success' => true,
                 'user' => Auth::user(),
             ]);
         }
