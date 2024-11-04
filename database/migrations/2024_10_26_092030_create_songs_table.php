@@ -13,12 +13,17 @@ return new class extends Migration
    {
        Schema::create('songs', function (Blueprint $table) {
            $table->id();
-           $table->string('time')->nullable();
+
+           $table->foreignId('user_id')->constrained('users');
+
+           $table->string('duration', 10)->nullable();
+           $table->string('size', 20)->nullable();
            $table->string('cover')->nullable();
            $table->string('name')->nullable();
            $table->string('artist')->nullable();
            $table->string('album')->nullable();
            $table->string('path');
+           
            $table->timestamps();
        });
    }
