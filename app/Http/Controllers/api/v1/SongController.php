@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SongResource;
 use App\Models\Song;
 use App\Services\SongService;
 use Illuminate\Http\Request;
 use Storage;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Owenoj\LaravelGetId3\GetId3;
 
 class SongController extends Controller
 {
@@ -15,7 +17,7 @@ class SongController extends Controller
     {
         $songs = Song::all();
 
-        return response()->json($songs);
+        return response()->json(SongResource::collection($songs));
     }
 
     /**
@@ -24,21 +26,41 @@ class SongController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request):JsonResponse
+    public function store(Request $request): JsonResponse
     {
         try {
+
             // Validate the file
             $data = $request->validate([
                 'file' => 'required|mimetypes:audio/mpeg,audio/wav,audio/ogg',
             ]);
 
+
             $file = $data['file'];
+
+            // Get metadata
+            $track = GetId3::fromUploadedFile(request()->file('file'));
+            $info = $track->extractInfo();
+
+            //return response()->json([$track->getTitle()]);
+            // Upload cover
+            $comments = $info['comments'];
+            $cover = SongService::uploadCover($comments);
+
 
             // Get filename and path for the song
             [$path, $filename] = SongService::uploadSong($file);
 
             // Create a new song
-            $song = Song::create(['path' => $path, 'name' => $filename]);
+            $song = auth()->user()->songs()->create([
+                'path' => $path,
+                'name' => $filename,
+                'cover' => $cover,
+                'artist' => $track->getArtist(),
+                'album' => $track->getAlbum(),
+                'duration' => $track->getPlaytimeSeconds(),
+                'size' => $file->getSize()
+            ]);
 
             // Return the response
             return response()->json([
@@ -60,7 +82,7 @@ class SongController extends Controller
     {
         $song = Song::findOrFail($id);
 
-        return response()->json($song);
+        return response()->json(new SongResource($song));
     }
 
     public function edit(string $id): JsonResponse
@@ -103,11 +125,13 @@ class SongController extends Controller
         try {
             $song = Song::findOrFail($id);
 
-            $filepath = $song->path;
+            $songPath = $song->path;
+            $coverPath = $song->cover;
 
             $song->delete();
 
-            Storage::disk('public')->delete($filepath);
+            Storage::disk('public')->delete($songPath);
+            Storage::disk('public')->delete($coverPath);
 
             return response()->json([
                 'message' => 'Song deleted successfully',
@@ -122,7 +146,8 @@ class SongController extends Controller
         }
     }
 
-    public function stream(string $id): \Symfony\Component\HttpFoundation\StreamedResponse{
+    public function stream(string $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
         return SongService::streamHandler($id);
     }
 }

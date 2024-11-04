@@ -35,6 +35,26 @@ class SongService
     }
 
 
+    public static function uploadCover($comments): string|null
+    {
+        if (isset($comments['picture'][0])) {
+            $pictureData = $comments['picture'][0];
+
+            if (isset($pictureData['data'])) {
+                // create uniq name
+                $fileName = uniqid() . '.jpg';
+
+                $folder = date('Y/m');
+                Storage::disk('public')->put("covers/$folder/$fileName", $pictureData['data']);
+
+                return "covers/$folder/$fileName";
+            }
+        }
+
+        return null;
+    }
+
+
     /**
      * Handles the streaming of a song by id.
      *
