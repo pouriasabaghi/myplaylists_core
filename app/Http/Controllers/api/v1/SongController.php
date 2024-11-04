@@ -7,25 +7,24 @@ use App\Models\Song;
 use App\Services\SongService;
 use Illuminate\Http\Request;
 use Storage;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SongController extends Controller
 {
-
-    public function index()
+    public function index(): JsonResponse
     {
         $songs = Song::all();
 
         return response()->json($songs);
     }
 
-
     /**
      * Upload a song to the server.
      *
      * @param Request $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request):JsonResponse
     {
         try {
             // Validate the file
@@ -57,22 +56,21 @@ class SongController extends Controller
         }
     }
 
-
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $song = Song::findOrFail($id);
 
         return response()->json($song);
     }
 
-    public function edit(string $id)
+    public function edit(string $id): JsonResponse
     {
         $song = Song::findOrFail($id);
 
         return response()->json($song);
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         try {
             $song = Song::findOrFail($id);
@@ -100,7 +98,7 @@ class SongController extends Controller
         }
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         try {
             $song = Song::findOrFail($id);
@@ -122,5 +120,9 @@ class SongController extends Controller
                 'success' => false,
             ], 500);
         }
+    }
+
+    public function stream(string $id): \Symfony\Component\HttpFoundation\StreamedResponse{
+        return SongService::streamHandler($id);
     }
 }

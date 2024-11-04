@@ -9,3 +9,4 @@ Route::get('/user', function (Request $request) {
 
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->middleware('auth:sanctum');
+Route::get('/songs/{id}/stream', [\App\Http\Controllers\api\v1\SongController::class, 'stream']);

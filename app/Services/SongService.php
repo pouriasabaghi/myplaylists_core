@@ -2,6 +2,8 @@
 namespace App\Services;
 
 use App\Models\Song;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SongService
 {
@@ -12,7 +14,7 @@ class SongService
      * @param \Illuminate\Http\UploadedFile $file The uploaded song file.
      * @return array [$path, $filename]
      * */
-    public static function uploadSong($file)
+    public static function uploadSong($file): array
     {
         $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 
@@ -30,5 +32,27 @@ class SongService
         $path = $file->storeAs("songs/$folder", $uploadFilename, 'public');
 
         return [$path, $filename];
+    }
+
+
+    /**
+     * Handles the streaming of a song by id.
+     *
+     * @param string $id The id of the song to stream.
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     * */
+    public static function streamHandler(string $id): StreamedResponse
+    {
+        $song = Song::findOrFail($id);
+        $path = $song->path;
+
+        if (!Storage::disk('public')->exists($path))
+            return response()->json(['message' => 'File not found'], 404);
+
+        return Storage::disk('public')->response($path, $song->name, [
+            'Content-Type' => 'audio/mpeg',
+            'Accept-Ranges' => 'bytes',
+        ]);
     }
 }
