@@ -10,3 +10,6 @@ Route::get('/user', function (Request $request) {
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->middleware('auth:sanctum');
 Route::get('/songs/{id}/stream', [\App\Http\Controllers\api\v1\SongController::class, 'stream']);
+Route::post('/songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle']);
+
+Route::get('/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'index']);

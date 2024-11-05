@@ -23,6 +23,7 @@ class SongResource extends JsonResource
             'cover' => $this->cover ? env('APP_URL_WITH_PORT') . "/storage/{$this->cover}" : null,
             'size' => $this->size,
             'path' => $this->path ? env('APP_URL_WITH_PORT') . "/storage/{$this->path}" : null,
+            'favorite' => auth()->user()->favorites()->where('song_id', $this->id)->exists(),
         ];
     }
 }
