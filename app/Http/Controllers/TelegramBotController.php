@@ -20,6 +20,10 @@ class TelegramBotController extends Controller
             'text' => 'آهنگ با موفقیت ارسال شد!!',
         ]);
 
+        return response()->json([
+            'status' => 'ok',
+        ]);
+
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
             // اعتبارسنجی و ذخیره کاربر در دیتابیس
