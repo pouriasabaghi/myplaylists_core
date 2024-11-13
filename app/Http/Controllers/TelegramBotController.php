@@ -17,7 +17,7 @@ class TelegramBotController extends Controller
         
         $telegram->sendMessage([
             'chat_id' =>  $chatId ,
-            'text' => 'آهنگ با موفقیت ارسال شد!',
+            'text' => 'آهنگ با موفقیت ارسال شد!!',
         ]);
 
         if ($message->getText()) {
