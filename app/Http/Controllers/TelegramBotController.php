@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        $telegram = new \Telegram\Bot\Api(env('TELEGRAM_BOT_TOKEN'));
+        $telegram = Telegram::bot('mybot');
+  
     
         $update = $telegram->getWebhookUpdate();
         $message = $update->getMessage();
