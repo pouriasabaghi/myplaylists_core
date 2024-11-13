@@ -12,6 +12,7 @@ class TelegramBotController extends Controller
     {
         $telegram = Telegram::bot('mybot');
   
+        return response()->json('ok');
     
         $update = $telegram->getWebhookUpdate();
         $message = $update->getMessage();
@@ -21,6 +22,7 @@ class TelegramBotController extends Controller
             'chat_id' => $chatId,
             'text' => 'آهنگ با موفقیت ارسال شد!',
         ]);
+
 
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
