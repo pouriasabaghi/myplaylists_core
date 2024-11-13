@@ -11,14 +11,14 @@ class TelegramBotController extends Controller
     {
         $telegram = new \Telegram\Bot\Api('7701211643:AAG_0AJpTIdosp2o9-biVYJBYmb1Qw6XmC0');
     
-        $telegram->sendMessage([
-            'chat_id' => $telegram->getMe(),
-            'text' => 'آهنگ با موفقیت ارسال شد!',
-        ]);
         $update = $telegram->getWebhookUpdate();
         $message = $update->get('message');
         $chatId = $message->getChat()->getId();
-    
+        
+        $telegram->sendMessage([
+            'chat_id' =>  $chatId ,
+            'text' => 'آهنگ با موفقیت ارسال شد!',
+        ]);
 
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
