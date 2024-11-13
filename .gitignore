@@ -20,4 +20,4 @@ yarn-error.log
 /.idea
 /.vscode
 /.zed
-ps_music_core.code-workspace
+*.code-workspace
