@@ -12,7 +12,7 @@ class TelegramBotController extends Controller
     {
         $telegram = Telegram::bot('mybot');
   
-        return response()->json('ok');
+
     
         $update = $telegram->getWebhookUpdate();
         $message = $update->getMessage();
@@ -27,10 +27,21 @@ class TelegramBotController extends Controller
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
             // اعتبارسنجی و ذخیره کاربر در دیتابیس
+        
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' =>'text arrived',
+            ]);
         } elseif ($message->getAudio()) {
+
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' =>'file arrived',
+            ]);
+
             // دریافت آهنگ و ارسال به API
-            $fileId = $message->getAudio()->getFileId();
-            $response = Http::post('https://api.myplaylists.ir/songs', [
+            // $fileId = $message->getAudio()->getFileId();
+            /* $response = Http::post('https://api.myplaylists.ir/songs', [
                 'file_id' => $fileId,
                 // بقیه پارامترهای مورد نیاز
             ]);
@@ -38,7 +49,7 @@ class TelegramBotController extends Controller
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'آهنگ با موفقیت ارسال شد!',
-            ]);
+            ]); */
         }
     }
     
