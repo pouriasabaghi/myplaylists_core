@@ -10,7 +10,7 @@ class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        $telegram = Telegram::bot('7701211643:AAG_0AJpTIdosp2o9-biVYJBYmb1Qw6XmC0');
+        $telegram = Telegram::bot('');
 
         $telegram->setWebhook([
             'url'=>'https://api.myplaylists.ir/telegram',
