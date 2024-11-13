@@ -21,7 +21,7 @@ class TelegramBotController extends Controller
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "Hello {$user->id}",
+            'text' => "Hello {$user->username}",
         ]);
 
 
