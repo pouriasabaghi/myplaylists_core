@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Telegram\Bot\Laravel\Facades\Telegram;
+use Telegram\Bot\Api;
+
 
 class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        $telegram = Telegram::bot('');
+        $telegram = new Api(env('TELEGRAM_BOT_TOKEN'));
 
         $telegram->setWebhook([
             'url'=>'https://api.myplaylists.ir/telegram',
