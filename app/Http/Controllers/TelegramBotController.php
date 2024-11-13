@@ -43,18 +43,18 @@ class TelegramBotController extends Controller
 
             $fileId = $message->getAudio()->getFileId();
 
-
+            $file = $telegram->getFile(['file_id' => $fileId]);
             
            /*  $response = Http::post('https://api.myplaylists.ir/api/songs', [
                 'file' => $fileId,
                 // بقیه پارامترهای مورد نیاز
             ]);
          */
-
+        $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file id is $fileId",
+                'text' => "file url is {$fileUrl}",
             ]);
 
         }
