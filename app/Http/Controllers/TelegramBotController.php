@@ -4,33 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Telegram\Bot\Api;
-
 
 class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        $telegram = new Api(env('TELEGRAM_BOT_TOKEN'));
-
-        $telegram->setWebhook([
-            'url'=>'https://api.myplaylists.ir/telegram',
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-
+        $telegram = new \Telegram\Bot\Api(env('TELEGRAM_BOT_TOKEN'));
+    
         $update = $telegram->getWebhookUpdate();
-        $message = $update->get('message');
+        $message = $update->getMessage();
         $chatId = $message->getChat()->getId();
-        
+    
         $telegram->sendMessage([
-            'chat_id' =>  $chatId ,
-            'text' => 'آهنگ با موفقیت ارسال شد!!',
+            'chat_id' => $chatId,
+            'text' => 'آهنگ با موفقیت ارسال شد!',
         ]);
-
-       
 
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
