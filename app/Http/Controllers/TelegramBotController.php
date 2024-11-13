@@ -35,22 +35,26 @@ class TelegramBotController extends Controller
             ]);
         } elseif ($message->getAudio()) {
 
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'file arrived',
             ]);
 
-            // دریافت آهنگ و ارسال به API
-            // $fileId = $message->getAudio()->getFileId();
-            /* $response = Http::post('https://api.myplaylists.ir/songs', [
-                'file_id' => $fileId,
+            $fileId = $message->getAudio()->getFileId();
+
+            $response = Http::post('https://api.myplaylists.ir/api/songs', [
+                'file' => $fileId,
                 // بقیه پارامترهای مورد نیاز
             ]);
-    
+        
+
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => 'آهنگ با موفقیت ارسال شد!',
-            ]); */
+            ]);
+
         }
     }
 
