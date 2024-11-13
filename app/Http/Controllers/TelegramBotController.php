@@ -4,13 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        $telegram = new \Telegram\Bot\Api('7701211643:AAG_0AJpTIdosp2o9-biVYJBYmb1Qw6XmC0');
-    
+        $telegram = Telegram::bot('7701211643:AAG_0AJpTIdosp2o9-biVYJBYmb1Qw6XmC0');
+
+        $telegram->setWebhook([
+            'url'=>'https://api.myplaylists.ir/telegram',
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+        ]);
+
         $update = $telegram->getWebhookUpdate();
         $message = $update->get('message');
         $chatId = $message->getChat()->getId();
@@ -20,9 +29,7 @@ class TelegramBotController extends Controller
             'text' => 'آهنگ با موفقیت ارسال شد!!',
         ]);
 
-        return response()->json([
-            'status' => 'ok',
-        ]);
+       
 
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
