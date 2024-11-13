@@ -11,32 +11,33 @@ class TelegramBotController extends Controller
     public function handle(Request $request)
     {
         $telegram = Telegram::bot('mybot');
-  
 
-    
+
+
         $update = $telegram->getWebhookUpdate();
         $message = $update->getMessage();
+        $user = $message->form;
         $chatId = $message->getChat()->getId();
-    
+
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => 'آهنگ با موفقیت ارسال شد!',
+            'text' => "Hello {$user->id}",
         ]);
 
 
         if ($message->getText()) {
             // دریافت ایمیل و رمز عبور برای ثبت‌نام
             // اعتبارسنجی و ذخیره کاربر در دیتابیس
-        
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' =>'text arrived',
+                'text' => 'text arrived',
             ]);
         } elseif ($message->getAudio()) {
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' =>'file arrived',
+                'text' => 'file arrived',
             ]);
 
             // دریافت آهنگ و ارسال به API
@@ -52,5 +53,5 @@ class TelegramBotController extends Controller
             ]); */
         }
     }
-    
+
 }
