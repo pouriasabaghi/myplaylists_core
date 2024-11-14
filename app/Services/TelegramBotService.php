@@ -8,7 +8,7 @@ use Telegram\Bot\Objects\File;
 
 class TelegramBotService
 {
-    public function handle(File $file): JsonResponse|string
+    public static function getFileUrl(File $file): JsonResponse|string
     {
         try {
             $fileUrl = 'https://api.telegram.org/file/bot' . config('telegram.bots.mybot.token') . '/' . $file->getFilePath();
