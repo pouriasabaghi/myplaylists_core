@@ -24,15 +24,36 @@ class TelegramBotController extends Controller
         $chatId = $message->getChat()->getId();
 
 
-        $userId = 1;
+        $userId = User::firstWhere('name', $user->username)?->id;
+
+
 
         if ($message->getText() === '/start') {
-            $welcomeText = "Hello {$user->username} \n $userId Please send me a song file to upload it.";
+            $welcomeText = "👋 Hello {$user->username}" . PHP_EOL;
+
+            if ($userId) {
+                $welcomeText .= "🔼 Please send me a song file to upload it.";
+                $welcomeText .= "👉 Maximum size due telegram limitation is 20MB";
+            } else {
+                $welcomeText .= "😥 Your account is'nt registered t.me/@p_nightwolf";
+            }
+
+
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => $welcomeText,
             ]);
         } elseif ($message->getAudio()) {
+
+            if (!$userId) {
+                $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
+                ]);
+                return;
+            }
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text' => "Uploading file....",
@@ -47,7 +68,7 @@ class TelegramBotController extends Controller
             $file = $telegram->getFile(['file_id' => $fileId]);
 
             $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
-            [$path, $_] = SongService::uploadSong($fileUrl);
+            [$path] = SongService::uploadSong($fileUrl);
 
             // Get metadata
             $track = GetId3::fromDiskAndPath('public', $path);
@@ -57,8 +78,6 @@ class TelegramBotController extends Controller
             $comments = $info['comments'];
             $cover = SongService::uploadCover($comments);
 
-
-
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
@@ -66,9 +85,8 @@ class TelegramBotController extends Controller
                 'artist' => $audio->getPerformer(),
                 'size' => $audio->getFileSize(),
                 'duration' => $audio->getDuration(),
-                'cover'=>$cover,
+                'cover' => $cover,
             ]);
-
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
