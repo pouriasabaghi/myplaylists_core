@@ -96,7 +96,7 @@ class TelegramBotController extends Controller
         }else{
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "😐 hmmm what are you talking about?",
+                'text' => "😐 hmmm what are you talking about? Send me a song",
             ]);
         }
     }
