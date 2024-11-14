@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\SongService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -44,17 +45,14 @@ class TelegramBotController extends Controller
             $fileId = $message->getAudio()->getFileId();
 
             $file = $telegram->getFile(['file_id' => $fileId]);
-            
-           /*  $response = Http::post('https://api.myplaylists.ir/api/songs', [
-                'file' => $fileId,
-                // بقیه پارامترهای مورد نیاز
-            ]);
-         */
-        $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
+
+            $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
+
+            [$path, $filename] = SongService::uploadSong($fileUrl);
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file url is {$fileUrl}",
+                'text' => "file path is $path and filename is $filename",
             ]);
 
         }

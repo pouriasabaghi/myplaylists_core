@@ -4,32 +4,63 @@ namespace App\Services;
 use App\Models\Song;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Http;
+use Exception;
 
 class SongService
 {
 
-    /**
-     * Uploads a song file to the storage and generates a unique filename if needed.
+   /**
+     * Uploads a song file from a URL or uploaded file.
      *
-     * @param \Illuminate\Http\UploadedFile $file The uploaded song file.
+     * @param \Illuminate\Http\UploadedFile|string $fileOrUrl Either an UploadedFile instance or a URL string.
      * @return array [$path, $filename]
-     * */
-    public static function uploadSong($file): array
+     * @throws Exception if the file download fails.
+     */
+    public static function uploadSong($fileOrUrl): array
     {
-        $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        if (is_string($fileOrUrl)) {
+            // Handle the URL case
+            try {
+                $response = Http::get($fileOrUrl);
+                if (!$response->successful()) {
+                    throw new Exception('Failed to download file.');
+                }
+                
+                // Extract the filename from the URL
+                $urlPath = parse_url($fileOrUrl, PHP_URL_PATH);
+                $filename = pathinfo($urlPath, PATHINFO_FILENAME);
+                $extension = pathinfo($urlPath, PATHINFO_EXTENSION);
+                
+                // Create a unique filename if needed
+                $uploadFilename = "$filename.$extension";
+                $fileExists = Song::where('path', 'like', "songs/%/$uploadFilename%")->exists();
+                if ($fileExists) {
+                    $uploadFilename = time() . '_' . $uploadFilename;
+                }
+                
+                // Define folder based on date
+                $folder = date('Y/m');
+                $path = "songs/$folder/$uploadFilename";
+                
+                // Store the downloaded file
+                Storage::disk('public')->put($path, $response->body());
+            } catch (Exception $e) {
+                throw new Exception('File download failed: ' . $e->getMessage());
+            }
+        } else {
+            // Handle the uploaded file case
+            $filename = pathinfo($fileOrUrl->getClientOriginalName(), PATHINFO_FILENAME);
+            $uploadFilename = $fileOrUrl->getClientOriginalName();
+            $fileExists = Song::where('path', 'like', "songs/%/$uploadFilename%")->exists();
+            if ($fileExists) {
+                $uploadFilename = time() . '_' . $uploadFilename;
+            }
 
-        // Create a unique file name
-        $uploadFilename = $file->getClientOriginalName();
-
-        // Check if file already exists in database and add a time stamp if it does
-        $fileExists = Song::where('path', 'like', "songs/%/$uploadFilename%")->exists();
-        if ($fileExists) {
-            $uploadFilename = time() . '_' . $uploadFilename;
+            // Store the uploaded file in storage
+            $folder = date('Y/m');
+            $path = $fileOrUrl->storeAs("songs/$folder", $uploadFilename, 'public');
         }
-
-        // Store the file in the storage
-        $folder = date('Y/m');
-        $path = $file->storeAs("songs/$folder", $uploadFilename, 'public');
 
         return [$path, $filename];
     }
