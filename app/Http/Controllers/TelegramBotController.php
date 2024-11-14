@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Song;
 use App\Models\User;
 use App\Services\SongService;
+use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -12,72 +13,69 @@ use Owenoj\LaravelGetId3\GetId3;
 
 class TelegramBotController extends Controller
 {
-    public function handle(Request $request)
+    public $telegram;
+    public $message;
+    public $user;
+    public $chatId;
+
+    public function __construct()
     {
-        $telegram = Telegram::bot('mybot');
+        $this->telegram = Telegram::bot('mybot');
 
+        $update = $this->telegram->getWebhookUpdate();
 
+        $this->message = $update->getMessage();
 
-        $update = $telegram->getWebhookUpdate();
-        $message = $update->getMessage();
-        $user = $message->from;
-        $chatId = $message->getChat()->getId();
+        $this->user = $this->message->from;
+        
+        $this->chatId = $this->message->getChat()->getId();
+    }
 
+    public function handle(Request $request, TelegramBotService $telegramBotService)
+    {
+        // get user by telegram username 
+        $userId = User::firstWhere('name', $this->user->username)?->id;
 
-        $userId = User::firstWhere('name', $user->username)?->id;
-
-
-
-        if ($message->getText() === '/start') {
-            $welcomeText = "👋 Hello {$user->username}" . PHP_EOL . PHP_EOL;
-
-            if ($userId) {
-                $welcomeText .= "🔼 Please send me a song file to upload it." . PHP_EOL . PHP_EOL;
-                $welcomeText .= "👉 Maximum size due telegram limitation is 20MB" . PHP_EOL . PHP_EOL;
-            } else {
-                $welcomeText .= "😥 Your account is'nt registered t.me/@p_nightwolf";
-            }
-
-
-
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => $welcomeText,
-            ]);
-        } elseif ($message->getAudio()) {
-
+        if ($this->message->getText() === '/start') {
+            $this->sendWelcomeMessage($userId);
+        } elseif ($this->message->getAudio()) {
+            // user is'nt registered
             if (!$userId) {
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
                     'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
                 ]);
                 return;
             }
 
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => "Uploading file....",
+            // get audio
+            $audio = $this->message->getAudio();
+
+            // get file
+            $fileId = $audio->getFileId();
+
+            // send loading text
+            $this->telegram->sendMessage([
+                'chat_id' => $this->chatId,
+                'text' => "Uploading {$audio->getTitle()}...",
             ]);
 
-            $audio = $message->getAudio();
-            $fileId = $audio->getFileId();
-            $fileSize = $audio->getFileSize();
-            $fileName = $audio->getTitle();
-            $artist = $audio->getPerformer();
+            // get file url
+            $file = $this->telegram->getFile(['file_id' => $fileId]);
+            $fileUrl = $telegramBotService::getFileUrl($file);
 
-            $file = $telegram->getFile(['file_id' => $fileId]);
-
-            $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
+            // upload song to server
             [$path] = SongService::uploadSong($fileUrl);
 
-            // Get metadata
+            // get metadata
             $track = GetId3::fromDiskAndPath('public', $path);
             $info = $track->extractInfo();
 
-            // Upload cover
+            // upload cover
             $comments = $info['comments'];
             $cover = SongService::uploadCover($comments);
 
+            // create song
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
@@ -88,17 +86,48 @@ class TelegramBotController extends Controller
                 'cover' => $cover,
             ]);
 
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
+            // response success message
+            $this->telegram->sendMessage([
+                'chat_id' => $this->chatId,
                 'text' => "🟢 Song has been uploaded successfully.",
             ]);
 
-        }else{
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => "😐 hmmm what are you talking about? Send me a song",
-            ]);
+        } else {
+            $this->commandNotFound();
         }
     }
+
+    /**
+     * send welcome message 
+     * @param int|null $userId
+     * @return void
+     */
+    public function sendWelcomeMessage(int|null $userId)
+    {
+        $welcomeText = "👋 Hello {$this->user->username}. \n\n";
+
+        if ($userId) {
+            $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
+            $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
+        } else {
+            $welcomeText .= "😥 Your account is'nt registered t.me/@p_nightwolf";
+        }
+
+
+        $this->telegram->sendMessage([
+            'chat_id' => $this->chatId,
+            'text' => $welcomeText,
+        ]);
+    }
+
+
+    public function commandNotFound()
+    {
+        $this->telegram->sendMessage([
+            'chat_id' => $this->chatId,
+            'text' => "😐 hmmm what are you talking about? Send me a song",
+        ]);
+    }
+
 
 }
