@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Song;
+use App\Models\User;
 use App\Services\SongService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -20,26 +22,19 @@ class TelegramBotController extends Controller
         $user = $message->from;
         $chatId = $message->getChat()->getId();
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => "Hello {$user->username}",
-        ]);
 
+        $userId = User::firstWhere('name', $user->username)?->id;
 
-        if ($message->getText()) {
-            // دریافت ایمیل و رمز عبور برای ثبت‌نام
-            // اعتبارسنجی و ذخیره کاربر در دیتابیس
-
+        if ($message->getText() === '/start') {
+            $welcomeText = "Hello {$user->username} \n Please send me a song file to upload it.";
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'text arrived',
+                'text' => $welcomeText,
             ]);
         } elseif ($message->getAudio()) {
-
-
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => 'file arrived',
+                'text' => "Uploading file....",
             ]);
 
             $fileId = $message->getAudio()->getFileId();
@@ -50,9 +45,16 @@ class TelegramBotController extends Controller
 
             [$path, $filename] = SongService::uploadSong($fileUrl);
 
+            Song::create([
+                'user_id' => $userId,
+                'path' => $path,
+                'name' => $filename,
+            ]);
+
+
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file path is $path and filename is $filename",
+                'text' => "file has been uploaded successfully",
             ]);
 
         }
