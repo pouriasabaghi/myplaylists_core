@@ -44,12 +44,11 @@ class TelegramBotController extends Controller
             $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
             [$path, $filename] = SongService::uploadSong($fileUrl);
 
-            /* 
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
                 'name' => $filename,
-            ]); */
+            ]);
 
 
             $telegram->sendMessage([
