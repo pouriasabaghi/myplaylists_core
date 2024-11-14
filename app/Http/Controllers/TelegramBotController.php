@@ -29,11 +29,11 @@ class TelegramBotController extends Controller
 
 
         if ($message->getText() === '/start') {
-            $welcomeText = "👋 Hello {$user->username}" . PHP_EOL;
+            $welcomeText = "👋 Hello {$user->username}" . PHP_EOL . PHP_EOL;
 
             if ($userId) {
-                $welcomeText .= "🔼 Please send me a song file to upload it.";
-                $welcomeText .= "👉 Maximum size due telegram limitation is 20MB";
+                $welcomeText .= "🔼 Please send me a song file to upload it." . PHP_EOL . PHP_EOL;
+                $welcomeText .= "👉 Maximum size due telegram limitation is 20MB" . PHP_EOL . PHP_EOL;
             } else {
                 $welcomeText .= "😥 Your account is'nt registered t.me/@p_nightwolf";
             }
