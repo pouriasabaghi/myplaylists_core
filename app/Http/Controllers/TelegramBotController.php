@@ -37,20 +37,25 @@ class TelegramBotController extends Controller
                 'text' => "Uploading file....",
             ]);
 
-            $fileId = $message->getAudio()->getFileId();
-            $fileSize = $message->getAudio()->getFileSize();
-            $fileName = $message->getAudio()->getTitle();
-            $artist = $message->getAudio()->getPerformer();
+            $audio = $message->getAudio();
+            $fileId = $audio->getFileId();
+            $fileSize = $audio->getFileSize();
+            $fileName = $audio->getTitle();
+            $artist = $audio->getPerformer();
 
             $file = $telegram->getFile(['file_id' => $fileId]);
 
             $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
-            [$path, $filename] = SongService::uploadSong($fileUrl);
+            [$path, $_] = SongService::uploadSong($fileUrl);
+          /*   $cover = SongService::uploadCover($audio); */
 
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
-                'name' => $filename,
+                'name' => $audio->getTitle(),
+                'artist'=>$audio->getPerformer(),
+                'size' => $audio->getFileSize(),
+                'duration'=>$audio->getDuration(),
             ]);
 
 
