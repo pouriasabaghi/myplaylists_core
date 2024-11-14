@@ -39,7 +39,8 @@ class TelegramBotController extends Controller
 
             $fileId = $message->getAudio()->getFileId();
             $fileSize = $message->getAudio()->getFileSize();
-            $fileName = $message->getAudio()->getFileName();
+            $fileName = $message->getAudio()->getTitle();
+            $artist = $message->getAudio()->getPerformer();
 
             $file = $telegram->getFile(['file_id' => $fileId]);
 
@@ -55,7 +56,7 @@ class TelegramBotController extends Controller
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file size is: $fileSize \n filename is $fileName",
+                'text' => "file size is: $fileSize \n filename is $fileName \n artist $artist",
             ]);
 
         }
