@@ -8,6 +8,7 @@ use App\Services\SongService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use Owenoj\LaravelGetId3\GetId3;
 
 class TelegramBotController extends Controller
 {
@@ -47,15 +48,25 @@ class TelegramBotController extends Controller
 
             $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
             [$path, $_] = SongService::uploadSong($fileUrl);
-          /*   $cover = SongService::uploadCover($audio); */
+
+            // Get metadata
+            $track = GetId3::fromDiskAndPath('public', $path);
+            $info = $track->extractInfo();
+
+            // Upload cover
+            $comments = $info['comments'];
+            $cover = SongService::uploadCover($comments);
+
+
 
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
                 'name' => $audio->getTitle(),
-                'artist'=>$audio->getPerformer(),
+                'artist' => $audio->getPerformer(),
                 'size' => $audio->getFileSize(),
-                'duration'=>$audio->getDuration(),
+                'duration' => $audio->getDuration(),
+                'cover'=>$cover,
             ]);
 
 
