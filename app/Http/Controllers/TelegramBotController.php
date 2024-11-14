@@ -23,7 +23,7 @@ class TelegramBotController extends Controller
         $chatId = $message->getChat()->getId();
 
 
-        $userId = User::firstWhere('name', $user->username)?->id;
+        $userId = 1;
 
         if ($message->getText() === '/start') {
             $welcomeText = "Hello {$user->username} \n $userId Please send me a song file to upload it.";
