@@ -42,9 +42,9 @@ class TelegramBotController extends Controller
             $file = $telegram->getFile(['file_id' => $fileId]);
 
             $fileUrl = 'https://api.telegram.org/file/bot' . env('TELEGRAM_BOT_TOKEN') . '/' . $file->getFilePath();
+            [$path, $filename] = SongService::uploadSong($fileUrl);
 
-            /* [$path, $filename] = SongService::uploadSong($fileUrl);
-
+            /* 
             Song::create([
                 'user_id' => $userId,
                 'path' => $path,
@@ -54,7 +54,7 @@ class TelegramBotController extends Controller
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file has been uploaded successfully",
+                'text' => "$path, $filename",
             ]);
 
         }
