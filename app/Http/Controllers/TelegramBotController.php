@@ -90,9 +90,14 @@ class TelegramBotController extends Controller
 
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "file size is: $fileSize \n filename is $fileName \n artist $artist",
+                'text' => "🟢 Song has been uploaded successfully.",
             ]);
 
+        }else{
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "😐 hmmm what are you talking about?",
+            ]);
         }
     }
 
