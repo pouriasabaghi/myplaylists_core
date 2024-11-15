@@ -27,73 +27,82 @@ class TelegramBotController extends Controller
         $this->message = $update->getMessage();
 
         $this->user = $this->message->from;
-        
+
         $this->chatId = $this->message->getChat()->getId();
     }
 
     public function handle(Request $request, TelegramBotService $telegramBotService)
     {
-        // get user by telegram username 
-        $userId = User::firstWhere('name', $this->user->username)?->id;
+        try {
+            // get user by telegram username 
+            $userId = User::firstWhere('name', $this->user->username)?->id;
 
-        if ($this->message->getText() === '/start') {
-            $this->sendWelcomeMessage($userId);
-        } elseif ($this->message->getAudio()) {
-            // user is'nt registered
-            if (!$userId) {
+            if ($this->message->getText() === '/start') {
+                $this->sendWelcomeMessage($userId);
+            } elseif ($this->message->getAudio()) {
+                // user is'nt registered
+                if (!$userId) {
+                    $this->telegram->sendMessage([
+                        'chat_id' => $this->chatId,
+                        'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
+                    ]);
+                    return;
+                }
+
+                // get audio
+                $audio = $this->message->getAudio();
+
+                // get file
+                $fileId = $audio->getFileId();
+
+                // send loading text
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
+                    'text' => "Uploading {$audio->getTitle()}...",
                 ]);
+
+                // get file url
+                $file = $this->telegram->getFile(['file_id' => $fileId]);
+                $fileUrl = $telegramBotService::getFileUrl($file);
+
+                // upload song to server
+                [$path] = SongService::uploadSong($fileUrl);
+
+                // get metadata
+                $track = GetId3::fromDiskAndPath('public', $path);
+                $info = $track->extractInfo();
+
+                // upload cover
+                $comments = $info['comments'];
+                $cover = SongService::uploadCover($comments);
+
+                // create song
+                Song::create([
+                    'user_id' => $userId,
+                    'path' => $path,
+                    'name' => $audio->getTitle(),
+                    'artist' => $audio->getPerformer(),
+                    'size' => $audio->getFileSize(),
+                    'duration' => $audio->getDuration(),
+                    'cover' => $cover,
+                ]);
+
+                // response success message
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
+                    'text' => "🟢 Song has been uploaded successfully.",
+                ]);
+
+                return;
+            } else {
+                $this->commandNotFound();
                 return;
             }
-
-            // get audio
-            $audio = $this->message->getAudio();
-
-            // get file
-            $fileId = $audio->getFileId();
-
-            // send loading text
+        } catch (\Throwable $th) {
             $this->telegram->sendMessage([
                 'chat_id' => $this->chatId,
-                'text' => "Uploading {$audio->getTitle()}...",
+                'text' => "An unexpected error occurred. Please try again later.",
             ]);
-
-            // get file url
-            $file = $this->telegram->getFile(['file_id' => $fileId]);
-            $fileUrl = $telegramBotService::getFileUrl($file);
-
-            // upload song to server
-            [$path] = SongService::uploadSong($fileUrl);
-
-            // get metadata
-            $track = GetId3::fromDiskAndPath('public', $path);
-            $info = $track->extractInfo();
-
-            // upload cover
-            $comments = $info['comments'];
-            $cover = SongService::uploadCover($comments);
-
-            // create song
-            Song::create([
-                'user_id' => $userId,
-                'path' => $path,
-                'name' => $audio->getTitle(),
-                'artist' => $audio->getPerformer(),
-                'size' => $audio->getFileSize(),
-                'duration' => $audio->getDuration(),
-                'cover' => $cover,
-            ]);
-
-            // response success message
-            $this->telegram->sendMessage([
-                'chat_id' => $this->chatId,
-                'text' => "🟢 Song has been uploaded successfully.",
-            ]);
-
-        } else {
-            $this->commandNotFound();
         }
     }
 
