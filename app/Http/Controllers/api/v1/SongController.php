@@ -103,7 +103,6 @@ class SongController extends Controller
                 'artist' => $request->artist,
                 'album' => $request->album,
                 'time' => $request->time,
-                'cover' => $request->cover,
             ]);
 
             return response()->json([
