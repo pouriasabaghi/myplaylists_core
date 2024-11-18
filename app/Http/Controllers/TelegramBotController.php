@@ -80,8 +80,9 @@ class TelegramBotController extends Controller
         } catch (\Throwable $th) {
             $this->telegram->sendMessage([
                 'chat_id' => $this->chatId,
-                'text' => "An unexpected error occurred. Please try again later.",
+                'text' => $th->getMessage() . ' in line:' . $th->getLine(),
             ]);
+            return ;
         }
     }
 
