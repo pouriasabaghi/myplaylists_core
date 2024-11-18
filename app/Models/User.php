@@ -57,8 +57,28 @@ class User extends Authenticatable
         return $this->belongsToMany(Song::class, 'favorites');
     }
 
-    public function playlists(){
+    public function playlists()
+    {
         return $this->hasMany(Playlist::class);
+    }
+
+    public function totalUploadedSize(string $in = 'kb')
+    {
+        $size = $this->songs()->sum('size');
+        if ($in == 'kb')
+            return (int) $size / 1024;
+        if ($in == 'mb')
+            return (int) floor($size / (1204 ** 2));
+        if ($in == 'gb')
+            return round($size / (1024 ** 3), 2);
+    }
+
+    public function canUpload($fileSize)
+    {
+        $maxUploadSize = config('uploads.max_upload_size_per_user');
+        $currentSize = $this->totalUploadedSize();
+
+        return ($currentSize + $fileSize) <= $maxUploadSize;
     }
 
 }

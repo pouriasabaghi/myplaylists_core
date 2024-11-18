@@ -34,6 +34,7 @@ class SongController extends Controller
                 'file' => 'required|mimetypes:audio/mpeg,audio/wav,audio/ogg',
             ]);
             $file = $data['file'];
+
             $song = $songService->createSong($file);
 
             // Return the response

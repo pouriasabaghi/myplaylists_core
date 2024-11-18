@@ -35,13 +35,12 @@ class TelegramBotController extends Controller
     {
         try {
             // get user by telegram username 
-            $userId = User::firstWhere('name', $this->user->username)?->id;
-
+            $user = User::firstWhere('name', $this->user->username);
             if ($this->message->getText() === '/start') {
-                $this->sendWelcomeMessage($userId);
+                $this->sendWelcomeMessage($user?->id);
             } elseif ($this->message->getAudio()) {
                 // user is'nt registered
-                if (!$userId) {
+                if (!$user) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
                         'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
@@ -65,27 +64,7 @@ class TelegramBotController extends Controller
                 $file = $this->telegram->getFile(['file_id' => $fileId]);
                 $fileUrl = $telegramBotService::getFileUrl($file);
 
-                // upload song to server
-                [$path] = $songService->uploadSong($fileUrl);
-
-                // get metadata
-                $track = GetId3::fromDiskAndPath('public', $path);
-                $info = $track->extractInfo();
-
-                // upload cover
-                $comments = $info['comments'];
-                $cover = $songService->uploadCover($comments);
-
-                // create song
-                Song::create([
-                    'user_id' => $userId,
-                    'path' => $path,
-                    'name' => $audio->getTitle(),
-                    'artist' => $audio->getPerformer(),
-                    'size' => $audio->getFileSize(),
-                    'duration' => $audio->getDuration(),
-                    'cover' => $cover,
-                ]);
+                $songService->createSongFromTelegramBot($fileUrl, $audio, $user);
 
                 // response success message
                 $this->telegram->sendMessage([

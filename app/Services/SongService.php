@@ -5,6 +5,7 @@ use App\Models\Song;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Http;
+use Owenoj\LaravelGetId3\GetId3;
 use Exception;
 
 class SongService
@@ -12,17 +13,27 @@ class SongService
 
     public function createSong($file)
     {
+        $filesize = $file->getSize();
+
+        //  Check for upload limitation
+        if (!auth()->user()->canUpload($filesize)) {
+            return response()->json([
+                'message' => 'You have reached your upload limit 10GB',
+                'success' => false,
+            ], 403);
+        }
+
+
+        // Get filename and path for the song
+        [$path, $filename] = $this->uploadSong($file);
+
         // Get metadata
-        $track = \Owenoj\LaravelGetId3\GetId3::fromUploadedFile(request()->file('file'));
+        $track = GetId3::fromDiskAndPath('public', $path);
         $info = $track->extractInfo();
 
         // Upload cover
         $comments = $info['comments'];
-        $cover = static::uploadCover($comments);
-
-
-        // Get filename and path for the song
-        [$path, $filename] = static::uploadSong($file);
+        $cover = $this->uploadCover($comments);
 
         // Create a new song
         $song = auth()->user()->songs()->create([
@@ -32,12 +43,47 @@ class SongService
             'artist' => $track->getArtist(),
             'album' => $track->getAlbum(),
             'duration' => $track->getPlaytimeSeconds(),
-            'size' => $file->getSize()
+            'size' => $filesize
         ]);
 
         return $song;
     }
 
+    public function createSongFromTelegramBot($fileUrl, $audio, $user)
+    {
+        $filesize = $audio->getFileSize();
+
+        //  Check for upload limitation
+        if (!auth()->user()->canUpload($filesize)) {
+            return response()->json([
+                'message' => 'You have reached your upload limit 10GB',
+                'success' => false,
+            ], 403);
+        }
+
+
+        // upload song to server
+        [$path] = $this->uploadSong($fileUrl);
+
+        // get metadata
+        $track = GetId3::fromDiskAndPath('public', $path);
+        $info = $track->extractInfo();
+
+        // upload cover
+        $comments = $info['comments'];
+        $cover = $this->uploadCover($comments);
+
+        // create song
+        Song::create([
+            'user_id' => $userId,
+            'path' => $path,
+            'name' => $audio->getTitle() ?? 'Unknown',
+            'artist' => $audio->getPerformer(),
+            'size' => $filesize,
+            'duration' => $audio->getDuration(),
+            'cover' => $cover,
+        ]);
+    }
 
     /**
      * Uploads a song file from a URL or uploaded file.
