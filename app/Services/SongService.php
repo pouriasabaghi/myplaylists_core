@@ -54,7 +54,7 @@ class SongService
         $filesize = $audio->getFileSize();
 
         //  Check for upload limitation
-        if (!auth()->user()->canUpload($filesize)) {
+        if (!$user->canUpload($filesize)) {
             return response()->json([
                 'message' => 'You have reached your upload limit 10GB',
                 'success' => false,
