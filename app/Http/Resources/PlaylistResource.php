@@ -20,7 +20,7 @@ class PlaylistResource extends JsonResource
             'name' => $this->name,
             'songs' => $songs,
             'total_songs' => $songs->count(),
-            'cover' => $songs->last()?->cover ? env('APP_URL_WITH_PORT') . "/storage/{$songs->last()?->cover}" : null
+            'cover' => $songs->last()?->cover,
         ];
     }
 }

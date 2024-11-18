@@ -57,9 +57,6 @@ class PlaylistController extends Controller
     public function destroy(Playlist $playlist): JsonResponse
     {
         try {
-            if ($playlist->user->id !== auth()->user()->id)
-                throw new \Exception("You don't have permission to delete this playlist", 403);
-
             $playlist->songs()->detach();
             $playlist->delete();
 

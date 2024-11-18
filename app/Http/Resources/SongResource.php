@@ -20,9 +20,9 @@ class SongResource extends JsonResource
             'artist' => $this->artist,
             'album' => $this->album,
             'duration' => $this->duration,
-            'cover' => $this->cover ? env('APP_URL_WITH_PORT') . "/storage/{$this->cover}" : null,
+            'cover' => $this->cover ,
             'size' => $this->size,
-            'path' => $this->path ? env('APP_URL_WITH_PORT') . "/storage/{$this->path}" : null,
+            'path' => $this->path,
             'favorite' => auth()->user()->favorites()->where('song_id', $this->id)->exists(),
         ];
     }

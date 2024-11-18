@@ -16,10 +16,6 @@ class PlaylistService
     }
 
     public function updatePlayList(Playlist $playlist, string $name){
-        if ($playlist->user_id !== Auth::id()) {
-            throw new \Exception("Unauthorized action.");
-        }
-
         $playlist->update([
             'name'=>$name
         ]);
@@ -29,19 +25,11 @@ class PlaylistService
 
     public function addSongToPlaylist(Playlist $playlist, Song $song)
     {
-        if ($playlist->user_id !== Auth::id()) {
-            throw new \Exception("Unauthorized action.");
-        }
-
         return $playlist->songs()->syncWithoutDetaching([$song->id]);
     }
 
     public function removeSongFromPlaylist(Playlist $playlist, Song $song)
     {
-        if ($playlist->user_id !== Auth::id()) {
-            throw new \Exception("Unauthorized action.");
-        }
-
         return $playlist->songs()->detach($song->id);
     }
 }

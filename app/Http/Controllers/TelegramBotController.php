@@ -31,7 +31,7 @@ class TelegramBotController extends Controller
         $this->chatId = $this->message->getChat()->getId();
     }
 
-    public function handle(Request $request, TelegramBotService $telegramBotService)
+    public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService)
     {
         try {
             // get user by telegram username 
@@ -66,7 +66,7 @@ class TelegramBotController extends Controller
                 $fileUrl = $telegramBotService::getFileUrl($file);
 
                 // upload song to server
-                [$path] = SongService::uploadSong($fileUrl);
+                [$path] = $songService->uploadSong($fileUrl);
 
                 // get metadata
                 $track = GetId3::fromDiskAndPath('public', $path);
@@ -74,7 +74,7 @@ class TelegramBotController extends Controller
 
                 // upload cover
                 $comments = $info['comments'];
-                $cover = SongService::uploadCover($comments);
+                $cover = $songService->uploadCover($comments);
 
                 // create song
                 Song::create([

@@ -10,14 +10,43 @@ use Exception;
 class SongService
 {
 
-   /**
+    public function createSong($file)
+    {
+        // Get metadata
+        $track = \Owenoj\LaravelGetId3\GetId3::fromUploadedFile(request()->file('file'));
+        $info = $track->extractInfo();
+
+        // Upload cover
+        $comments = $info['comments'];
+        $cover = static::uploadCover($comments);
+
+
+        // Get filename and path for the song
+        [$path, $filename] = static::uploadSong($file);
+
+        // Create a new song
+        $song = auth()->user()->songs()->create([
+            'path' => $path,
+            'name' => $filename,
+            'cover' => $cover,
+            'artist' => $track->getArtist(),
+            'album' => $track->getAlbum(),
+            'duration' => $track->getPlaytimeSeconds(),
+            'size' => $file->getSize()
+        ]);
+
+        return $song;
+    }
+
+
+    /**
      * Uploads a song file from a URL or uploaded file.
      *
      * @param \Illuminate\Http\UploadedFile|string $fileOrUrl Either an UploadedFile instance or a URL string.
      * @return array [$path, $filename]
      * @throws Exception if the file download fails.
      */
-    public static function uploadSong($fileOrUrl): array
+    public function uploadSong($fileOrUrl): array
     {
         if (is_string($fileOrUrl)) {
             // Handle the URL case
@@ -26,23 +55,23 @@ class SongService
                 if (!$response->successful()) {
                     throw new Exception('Failed to download file.');
                 }
-                
+
                 // Extract the filename from the URL
                 $urlPath = parse_url($fileOrUrl, PHP_URL_PATH);
                 $filename = pathinfo($urlPath, PATHINFO_FILENAME);
                 $extension = pathinfo($urlPath, PATHINFO_EXTENSION);
-                
+
                 // Create a unique filename if needed
                 $uploadFilename = "$filename.$extension";
                 $fileExists = Song::where('path', 'like', "songs/%/$uploadFilename%")->exists();
                 if ($fileExists) {
                     $uploadFilename = time() . '_' . $uploadFilename;
                 }
-                
+
                 // Define folder based on date
                 $folder = date('Y/m');
                 $path = "songs/$folder/$uploadFilename";
-                
+
                 // Store the downloaded file
                 Storage::disk('public')->put($path, $response->body());
             } catch (Exception $e) {
@@ -66,7 +95,7 @@ class SongService
     }
 
 
-    public static function uploadCover($comments): string|null
+    public function uploadCover($comments): string|null
     {
         if (isset($comments['picture'][0])) {
             $pictureData = $comments['picture'][0];
@@ -93,7 +122,7 @@ class SongService
      *
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      * */
-    public static function streamHandler(string $id): StreamedResponse
+    public function streamHandler(string $id): StreamedResponse
     {
         $song = Song::findOrFail($id);
         $path = $song->path;
