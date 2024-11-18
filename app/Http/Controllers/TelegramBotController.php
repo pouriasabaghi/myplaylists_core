@@ -64,6 +64,15 @@ class TelegramBotController extends Controller
                 $file = $this->telegram->getFile(['file_id' => $fileId]);
                 $fileUrl = $telegramBotService::getFileUrl($file);
 
+                //  check for upload limitation
+                if (!$user->canUpload($audio->getFileSize())) {
+                    $this->telegram->sendMessage([
+                        'chat_id' => $this->chatId,
+                        'text' => 'You have reached your upload limit 10GB',
+                    ]);
+                    return;
+                }
+
                 $songService->createSongFromTelegramBot($fileUrl, $audio, $user);
 
                 // response success message
@@ -82,7 +91,7 @@ class TelegramBotController extends Controller
                 'chat_id' => $this->chatId,
                 'text' => $th->getMessage() . ' in line:' . $th->getLine(),
             ]);
-            return ;
+            return;
         }
     }
 

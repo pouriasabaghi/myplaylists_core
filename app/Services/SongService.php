@@ -51,17 +51,6 @@ class SongService
 
     public function createSongFromTelegramBot($fileUrl, $audio, $user)
     {
-        $filesize = $audio->getFileSize();
-
-        //  Check for upload limitation
-        if (!$user->canUpload($filesize)) {
-            return response()->json([
-                'message' => 'You have reached your upload limit 10GB',
-                'success' => false,
-            ], 403);
-        }
-
-
         // upload song to server
         [$path] = $this->uploadSong($fileUrl);
 
@@ -75,11 +64,11 @@ class SongService
 
         // create song
         Song::create([
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'path' => $path,
             'name' => $audio->getTitle() ?? 'Unknown',
             'artist' => $audio->getPerformer(),
-            'size' => $filesize,
+            'size' => $audio->getFileSize(),
             'duration' => $audio->getDuration(),
             'cover' => $cover,
         ]);
