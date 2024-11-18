@@ -68,7 +68,7 @@ class TelegramBotController extends Controller
                 if (!$user->canUpload($audio->getFileSize())) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' => 'You have reached your upload limit 10GB',
+                        'text' => "🔥 You have reached your upload limit 10GB  \n Please send message to t.me/@p_nightwolf",
                     ]);
                     return;
                 }
