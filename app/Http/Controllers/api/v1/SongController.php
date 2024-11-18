@@ -103,7 +103,9 @@ class SongController extends Controller
             $song->delete();
 
             Storage::disk('public')->delete($songPath);
-            Storage::disk('public')->delete($coverPath);
+
+            if ($coverPath)
+                Storage::disk('public')->delete($coverPath);
 
             return response()->json([
                 'message' => 'Song deleted successfully',
