@@ -23,7 +23,7 @@ class SongResource extends JsonResource
             'cover' => $this->cover ,
             'size' => $this->size,
             'path' => $this->path,
-            'favorite' => auth()->user()->favorites()->where('song_id', $this->id)->exists(),
+            'favorite' => auth()->user()?->favorites()->where('song_id', $this->id)->exists(),
         ];
     }
 }

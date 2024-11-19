@@ -41,6 +41,13 @@ class PlaylistController extends Controller
 
     public function update(Request $request, Playlist $playlist, PlaylistService $playlistService): JsonResponse
     {
+        if($playlist->user_id !== auth()->user()->id) {
+            return response()->json([
+                'message' => 'Only owner can make these changes',
+                'success' => false
+            ], 403);
+        }
+        
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -57,6 +64,12 @@ class PlaylistController extends Controller
     public function destroy(Playlist $playlist): JsonResponse
     {
         try {
+            if($playlist->user_id !== auth()->user()->id) {
+                return response()->json([
+                    'message' => 'Only owner can make these changes',
+                    'success' => false
+                ], 403);
+            }
             $playlist->songs()->detach();
             $playlist->delete();
 
@@ -72,6 +85,7 @@ class PlaylistController extends Controller
             ], $th->getCode() ?: 500);
         }
     }
+    
 
     public function getSongs(Playlist $playlist): JsonResponse
     {
@@ -96,6 +110,13 @@ class PlaylistController extends Controller
 
     public function removeSong(Playlist $playlist, Song $song, PlaylistService $playlistService): JsonResponse
     {
+        if($playlist->user_id !== auth()->user()->id) {
+            return response()->json([
+                'message' => 'Only owner can make these changes',
+                'success' => false
+            ], 403);
+        }
+
         $playlistService->removeSongFromPlaylist($playlist, $song);
 
         return response()->json([

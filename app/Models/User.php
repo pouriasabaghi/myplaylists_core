@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->hasMany(Playlist::class);
     }
 
+    public function followedPlaylists()
+    {
+        return $this->belongsToMany(Playlist::class, 'follows');
+    }
+
     public function totalUploadedSize(string $in = 'kb')
     {
         $size = $this->songs()->sum('size');

@@ -21,6 +21,7 @@ class PlaylistResource extends JsonResource
             'songs' => $songs,
             'total_songs' => $songs->count(),
             'cover' => $songs->last()?->cover,
+            'isFollowed' => $this->user_id !== auth()->user()->id,
         ];
     }
 }
