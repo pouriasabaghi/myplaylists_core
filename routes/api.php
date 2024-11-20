@@ -1,5 +1,4 @@
 <?php
-use App\Http\Controllers\api\v1\FollowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,9 +22,11 @@ Route::get('/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class
 Route::get('playlists/{playlist}/songs', [App\Http\Controllers\api\v1\PlaylistController::class, 'getSongs']);
 
 Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
-    Route::get('/follow', [FollowController::class, 'index']);
-    Route::post('/{playlist}/follow', [FollowController::class, 'toggle']);
-    Route::get('/{playlist}/is-following', [FollowController::class, 'isFollowing']);
+    Route::get('/top-playlists', [App\Http\Controllers\api\v1\PlaylistController::class, 'getTopPlaylists']);
+
+    Route::get('/follow', [App\Http\Controllers\api\v1\FollowController::class, 'index']);
+    Route::post('/{playlist}/follow', [App\Http\Controllers\api\v1\FollowController::class, 'toggle']);
+    Route::get('/{playlist}/is-following', action: [App\Http\Controllers\api\v1\FollowController::class, 'isFollowing']);
     
     Route::get('/', [App\Http\Controllers\api\v1\PlaylistController::class, 'index']);
     Route::post('/', [App\Http\Controllers\api\v1\PlaylistController::class, 'create']);

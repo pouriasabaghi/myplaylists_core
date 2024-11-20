@@ -17,4 +17,14 @@ class Playlist extends Model
     {
         return $this->belongsToMany(Song::class);
     }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'playlist_id', 'user_id');
+    }
+
+    public function followersCount()
+    {
+        return $this->followers()->count();
+    }
 }
