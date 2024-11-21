@@ -18,7 +18,7 @@ class SongService
         //  Check for upload limitation
         if (!auth()->user()->canUpload($filesize)) {
             return response()->json([
-                'message' => 'You have reached your upload limit 10GB',
+                'message' => '🔥 You have reached your upload limit 3GB',
                 'success' => false,
             ], 403);
         }

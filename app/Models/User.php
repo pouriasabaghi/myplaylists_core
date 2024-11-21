@@ -67,21 +67,29 @@ class User extends Authenticatable
         return $this->belongsToMany(Playlist::class, 'follows');
     }
 
-    public function totalUploadedSize(string $in = 'kb')
+    public function totalUploadedSize(string $in = 'bytes')
     {
-        $size = $this->songs()->sum('size');
-        if ($in == 'kb')
-            return (int) $size / 1024;
-        if ($in == 'mb')
-            return (int) floor($size / (1204 ** 2));
-        if ($in == 'gb')
+        $size = $this->songs()->sum('size'); // bite
+
+        if ($in === 'kb') {
+            return round($size / 1024, 2);
+        }
+
+        if ($in === 'mb') {
+            return round($size / (1024 ** 2), 2);
+        }
+
+        if ($in === 'gb') {
             return round($size / (1024 ** 3), 2);
+        }
+
+        return $size;
     }
 
     public function canUpload($fileSize)
     {
-        $maxUploadSize = config('uploads.max_upload_size_per_user');
-        $currentSize = $this->totalUploadedSize();
+        $maxUploadSize = config('uploads.max_upload_size_per_user'); // bite
+        $currentSize = $this->totalUploadedSize(); // bite
 
         return ($currentSize + $fileSize) <= $maxUploadSize;
     }
