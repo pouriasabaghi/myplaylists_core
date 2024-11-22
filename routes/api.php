@@ -8,7 +8,8 @@ Route::get('/user', function (Request $request) {
 
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show', 'stream'])->middleware('auth:sanctum');
-Route::post('songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle'])->middleware('auth:sanctum');
+Route::get('/songs/top-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getTopSongs'])->middleware('auth:sanctum');
+Route::post('/songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle'])->middleware('auth:sanctum');
 
 // unauthenticated users can access to single songs and stream them
 Route::prefix('songs')->group(function () {
@@ -27,7 +28,7 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
     Route::get('/follow', [App\Http\Controllers\api\v1\FollowController::class, 'index']);
     Route::post('/{playlist}/follow', [App\Http\Controllers\api\v1\FollowController::class, 'toggle']);
     Route::get('/{playlist}/is-following', action: [App\Http\Controllers\api\v1\FollowController::class, 'isFollowing']);
-    
+
     Route::get('/', [App\Http\Controllers\api\v1\PlaylistController::class, 'index']);
     Route::post('/', [App\Http\Controllers\api\v1\PlaylistController::class, 'create']);
     Route::get('/{playlist}', [App\Http\Controllers\api\v1\PlaylistController::class, 'edit']);
@@ -35,5 +36,5 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
     Route::delete('/{playlist}', [App\Http\Controllers\api\v1\PlaylistController::class, 'destroy']);
     Route::post('/{playlist}/songs', [App\Http\Controllers\api\v1\PlaylistController::class, 'addSong']);
     Route::delete('/{playlist}/songs/{song}', [App\Http\Controllers\api\v1\PlaylistController::class, 'removeSong']);
-    
+
 });

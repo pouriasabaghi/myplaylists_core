@@ -9,20 +9,27 @@ class Song extends Model
 {
     protected $fillable = ['duration', 'size', 'cover', 'path', 'name', 'artist', 'album', 'user_id'];
 
-    protected function cover(): Attribute{
+    protected function cover(): Attribute
+    {
         return Attribute::make(
-            get: fn ($value) => $value ? env('APP_URL_WITH_PORT') . "/storage/{$value}" : null
+            get: fn($value) => $value ? env('APP_URL_WITH_PORT') . "/storage/{$value}" : null
         );
     }
 
-    protected function path(){
+    protected function path()
+    {
         return Attribute::make(
-            get: fn ($value) => $value ? env('APP_URL_WITH_PORT') . "/storage/{$value}" : null
+            get: fn($value) => $value ? env('APP_URL_WITH_PORT') . "/storage/{$value}" : null
         );
     }
 
     public function playlists()
     {
         return $this->belongsToMany(Playlist::class);
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(User::class, 'favorites');
     }
 }

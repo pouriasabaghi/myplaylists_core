@@ -71,6 +71,13 @@ class SongController extends Controller
         try {
             $song = Song::findOrFail($id);
 
+            if($song->user_id !== auth()->user()->id) {
+                return response()->json([
+                    'message' => 'Only owner can make these changes',
+                    'success' => false
+                ], 403);
+            }
+
             // Update the song
             $song->update([
                 'name' => $request->name,
@@ -96,6 +103,13 @@ class SongController extends Controller
     {
         try {
             $song = Song::findOrFail($id);
+
+            if($song->user_id !== auth()->user()->id) {
+                return response()->json([
+                    'message' => 'Only owner can make these changes',
+                    'success' => false
+                ], 403);
+            }
 
             $songPath = $song->path;
             $coverPath = $song->cover;
@@ -123,5 +137,15 @@ class SongController extends Controller
     public function stream(string $id, SongService $songService): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $songService->streamHandler($id);
+    }
+
+    public function getTopSongs()
+    {
+        $mostFavoritesSongs = Song::withCount('favorites')
+            ->orderByDesc('favorites_count')
+            ->take(10)
+            ->get();
+
+        return response()->json(SongResource::collection($mostFavoritesSongs));
     }
 }
