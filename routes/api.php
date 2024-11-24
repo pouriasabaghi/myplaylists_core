@@ -38,3 +38,5 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
     Route::delete('/{playlist}/songs/{song}', [App\Http\Controllers\api\v1\PlaylistController::class, 'removeSong']);
 
 });
+
+Route::get('/search', [App\Http\Controllers\api\v1\SearchController::class, 'search']);
