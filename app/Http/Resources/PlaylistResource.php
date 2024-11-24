@@ -22,7 +22,7 @@ class PlaylistResource extends JsonResource
             'total_songs' => $songs->count(),
             'cover' => $songs->last()?->cover,
             'isFollowed' => $this->user_id !== auth()->user()->id,
-            'owner_name' =>substr(ucfirst($this->user->name), 0, 3) . '...',
+            'owner_name' =>mb_strimwidth(ucfirst($this->user->name), 0, 10,'...' )
         ];
     }
 }

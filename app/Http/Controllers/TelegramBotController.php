@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Song;
 use App\Models\User;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Owenoj\LaravelGetId3\GetId3;
 
 class TelegramBotController extends Controller
 {
@@ -35,7 +32,7 @@ class TelegramBotController extends Controller
     {
         try {
             // get user by telegram username 
-            $user = User::firstWhere('name', $this->user->username);
+            $user = User::firstWhere('telegram_username', $this->user->username);
             if ($this->message->getText() === '/start') {
                 $this->sendWelcomeMessage($user?->id);
             } elseif ($this->message->getAudio()) {
@@ -43,7 +40,7 @@ class TelegramBotController extends Controller
                 if (!$user) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' => "You are not registered. \n Please send message to t.me/@p_nightwolf"
+                        'text' => "You are not registered. \n Please send message to t.me/p_nightwolf"
                     ]);
                     return;
                 }
@@ -68,7 +65,7 @@ class TelegramBotController extends Controller
                 if (!$user->canUpload($audio->getFileSize())) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' => "🔥 You have reached your upload limit 3GB  \n Please send message to t.me/@p_nightwolf",
+                        'text' => "🔥 You have reached your upload limit 3GB  \n Please send message to t.me/p_nightwolf",
                     ]);
                     return;
                 }
@@ -108,7 +105,7 @@ class TelegramBotController extends Controller
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
             $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
         } else {
-            $welcomeText .= "😥 Your account is'nt registered t.me/@p_nightwolf";
+            $welcomeText .= "😥 Your account is'nt registered t.me/p_nightwolf";
         }
 
 
