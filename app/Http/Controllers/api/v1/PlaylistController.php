@@ -150,7 +150,7 @@ class PlaylistController extends Controller
     {
         $mostFollowedPlaylists = Playlist::withCount('followers')
             ->orderByDesc('followers_count')
-            ->take(10)
+            ->take(30)
             ->get();
 
         return response()->json(PlaylistResource::collection($mostFollowedPlaylists));
