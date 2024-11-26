@@ -108,6 +108,26 @@ class PlaylistController extends Controller
         ]);
     }
 
+    public function addSongs(Request $request, Playlist $playlist, PlaylistService $playlistService): JsonResponse
+    {
+        $data = $request->validate([
+            'songs_ids' => 'required|array',
+        ]);
+
+        $ids = $data['songs_ids'];
+
+        $songs = Song::whereIn('id', $ids)->get();
+
+        foreach ($songs as $song) {
+            $playlistService->addSongToPlaylist($playlist, $song);
+        }
+
+        return response()->json([
+            'message' => 'Song added to playlist successfully',
+            'success' => true,
+        ]);
+    }
+
     public function removeSong(Playlist $playlist, Song $song, PlaylistService $playlistService): JsonResponse
     {
         if ($playlist->user_id !== auth()->user()->id) {

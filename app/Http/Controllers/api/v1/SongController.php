@@ -71,7 +71,7 @@ class SongController extends Controller
         try {
             $song = Song::findOrFail($id);
 
-            if($song->user_id !== auth()->user()->id) {
+            if ($song->user_id !== auth()->user()->id) {
                 return response()->json([
                     'message' => 'Only owner can make these changes',
                     'success' => false
@@ -99,27 +99,12 @@ class SongController extends Controller
         }
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(string|array $id, SongService $songService): JsonResponse
     {
         try {
             $song = Song::findOrFail($id);
 
-            if($song->user_id !== auth()->user()->id) {
-                return response()->json([
-                    'message' => 'Only owner can make these changes',
-                    'success' => false
-                ], 403);
-            }
-
-            $songPath = $song->path;
-            $coverPath = $song->cover;
-
-            $song->delete();
-
-            Storage::disk('public')->delete($songPath);
-
-            if ($coverPath)
-                Storage::disk('public')->delete($coverPath);
+            $songService->deleteSong($song);
 
             return response()->json([
                 'message' => 'Song deleted successfully',
@@ -127,7 +112,35 @@ class SongController extends Controller
             ]);
         } catch (\Throwable $th) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => $th->getCode() === 500 ? 'An error accorded' : $th->getMessage(),
+                'error' => $th->getMessage(),
+                'success' => false,
+            ], 500);
+        }
+    }
+
+    public function bulkDestroy(Request $request, SongService $songService): JsonResponse
+    {
+        try {
+            $data = $request->validate([
+                'ids' => 'required|array',
+            ]);
+            
+            $ids = $data['ids'];
+
+            $songs = Song::whereIn('id', $ids)->get();
+
+            foreach ($songs as $song) {
+                $songService->deleteSong($song);
+            }
+
+            return response()->json([
+                'message' => 'Song deleted successfully',
+                'success' => true,
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => $th->getCode() === 500 ? 'An error accorded' : $th->getMessage(),
                 'error' => $th->getMessage(),
                 'success' => false,
             ], 500);

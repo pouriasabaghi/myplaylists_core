@@ -10,6 +10,7 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show', 'stream'])->middleware('auth:sanctum');
 Route::get('/songs/top-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getTopSongs'])->middleware('auth:sanctum');
 Route::post('/songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle'])->middleware('auth:sanctum');
+Route::post('/songs/bulk-delete', [\App\Http\Controllers\api\v1\SongController::class, 'bulkDestroy'])->middleware('auth:sanctum');
 
 // unauthenticated users can access to single songs and stream them
 Route::prefix('songs')->group(function () {
@@ -35,6 +36,7 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
     Route::put('/{playlist}', [App\Http\Controllers\api\v1\PlaylistController::class, 'update']);
     Route::delete('/{playlist}', [App\Http\Controllers\api\v1\PlaylistController::class, 'destroy']);
     Route::post('/{playlist}/songs', [App\Http\Controllers\api\v1\PlaylistController::class, 'addSong']);
+    Route::post('/{playlist}/songs/bulk', [App\Http\Controllers\api\v1\PlaylistController::class, 'addSongs']);
     Route::delete('/{playlist}/songs/{song}', [App\Http\Controllers\api\v1\PlaylistController::class, 'removeSong']);
 
 });
