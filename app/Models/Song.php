@@ -23,6 +23,13 @@ class Song extends Model
         );
     }
 
+    protected function directLink()
+    {
+        return Attribute::make(
+            get: fn() => config('app.frontend_url') . "/songs/{$this->id}"
+        );
+    }
+
     public function playlists()
     {
         return $this->belongsToMany(Playlist::class);
