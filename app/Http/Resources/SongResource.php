@@ -20,10 +20,10 @@ class SongResource extends JsonResource
             'artist' => $this->artist,
             'album' => $this->album,
             'duration' => $this->duration,
-            'cover' => $this->cover ,
-            'size' => $this->size,
+            'cover' => $this->cover,
             'path' => $this->path,
             'favorite' => auth()->user()?->favorites()->where('song_id', $this->id)->exists(),
+            'lyrics' => $this->lyrics,
         ];
     }
 }

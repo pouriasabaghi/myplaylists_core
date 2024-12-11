@@ -83,6 +83,7 @@ class SongController extends Controller
                 'name' => $request->name,
                 'artist' => $request->artist,
                 'album' => $request->album,
+                'lyrics' => $request->lyrics,
             ]);
 
             return response()->json([
@@ -125,7 +126,7 @@ class SongController extends Controller
             $data = $request->validate([
                 'ids' => 'required|array',
             ]);
-            
+
             $ids = $data['ids'];
 
             $songs = Song::whereIn('id', $ids)->get();

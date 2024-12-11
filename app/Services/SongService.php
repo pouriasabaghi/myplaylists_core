@@ -43,7 +43,8 @@ class SongService
             'artist' => $track->getArtist(),
             'album' => $track->getAlbum(),
             'duration' => $track->getPlaytimeSeconds(),
-            'size' => $filesize
+            'size' => $filesize,
+            'lyrics' => request()->lyrics
         ]);
 
         return $song;
@@ -63,7 +64,7 @@ class SongService
         $cover = $this->uploadCover($comments);
 
         // create song
-        Song::create([
+        $song = Song::create([
             'user_id' => $user->id,
             'path' => $path,
             'name' => $audio->getTitle() ?? 'Unknown',
@@ -72,6 +73,8 @@ class SongService
             'duration' => $audio->getDuration(),
             'cover' => $cover,
         ]);
+
+        return $song;
     }
 
     /**

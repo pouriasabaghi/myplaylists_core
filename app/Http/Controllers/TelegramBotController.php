@@ -70,12 +70,12 @@ class TelegramBotController extends Controller
                     return;
                 }
 
-                $songService->createSongFromTelegramBot($fileUrl, $audio, $user);
+                $song = $songService->createSongFromTelegramBot($fileUrl, $audio, $user);
 
                 // response success message
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "🟢 Song has been uploaded successfully.",
+                    'text' => "🟢 Song has been uploaded successfully. \n 🎧 Song:{$song->path}",
                 ]);
 
                 return;
