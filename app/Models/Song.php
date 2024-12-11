@@ -23,10 +23,10 @@ class Song extends Model
         );
     }
 
-    protected function directLink()
+    protected function directLink(): Attribute
     {
         return Attribute::make(
-            get: fn() => config('app.frontend_url') . "/songs/{$this->id}"
+            get: fn ($value, $attributes) => config('app.frontend_url') . "/song/{$attributes['id']}",      
         );
     }
 
