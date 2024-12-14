@@ -78,6 +78,11 @@ class TelegramBotController extends Controller
                     'text' => "🟢 Song has been uploaded successfully. \n 🎧 Song:\n {$song->direct_link}",
                 ]);
 
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
+                    'text' => "🎧 Song:\n {$song->direct_link}",
+                ]);
+
                 return;
             } else {
                 $this->commandNotFound();
