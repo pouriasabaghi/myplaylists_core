@@ -7,6 +7,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Http;
 use Owenoj\LaravelGetId3\GetId3;
 use Exception;
+use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\File;
 
 class SongService
 {
@@ -143,7 +145,13 @@ class SongService
                 $fileName = uniqid() . '.jpg';
 
                 $folder = date('Y/m');
-                Storage::disk('public')->put("covers/$folder/$fileName", $pictureData['data']);
+       
+                if (!File::isDirectory("storage/covers/$folder"))
+                    File::makeDirectory("storage/covers/$folder", 0755, true);
+
+                Image::read($pictureData['data'])
+                    ->cover(width: 300, height: 300, position: 'center')
+                    ->save("storage/covers/$folder/$fileName");
 
                 return "covers/$folder/$fileName";
             }
