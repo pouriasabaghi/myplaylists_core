@@ -157,7 +157,7 @@ class SongController extends Controller
     {
         $mostFavoritesSongs = Song::withCount('favorites')
             ->orderByDesc('favorites_count')
-            ->take(10)
+            ->take(30)
             ->get();
 
         return response()->json(SongResource::collection($mostFavoritesSongs));
