@@ -145,7 +145,7 @@ class SongService
                 $fileName = uniqid() . '.jpg';
 
                 $folder = date('Y/m');
-       
+
                 if (!File::isDirectory("storage/covers/$folder"))
                     File::makeDirectory("storage/covers/$folder", 0755, true);
 
@@ -201,4 +201,41 @@ class SongService
 
 
     }
+
+    public function getLyrics($song)
+    {
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        $apiKey = env("AI_API_KEY");
+
+        $songTitle = $song->name;
+        $songArtist = $song->artist;
+
+        $requestData = [
+            "contents" => [
+                [
+                    "parts" => [
+                        ["text" => "This request is come from my music application, my user try to find lyrics for song *$songTitle* from *$songArtist* if you can help him in finding lyrics please only return lyrics in other wise return NotFound. only return NotFound if you can't find anything"]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post("$apiUrl?key=$apiKey", $requestData);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $lyrics = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+            if ($lyrics === 'NotFound')
+                return "NotFound";
+
+            return $lyrics;
+
+        }
+
+        return "response wasn't success";
+    }
+
 }

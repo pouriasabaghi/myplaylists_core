@@ -36,11 +36,13 @@ class SongController extends Controller
             $file = $data['file'];
 
             $song = $songService->createSong($file);
-
+            $lyrics = $songService->getLyrics($song);
+            
             // Return the response
             return response()->json([
                 'message' => 'Song uploaded successfully',
                 'song' => $song,
+                'lyrics' => $lyrics,
                 'success' => true,
             ], 201);
         } catch (\Throwable $th) {
