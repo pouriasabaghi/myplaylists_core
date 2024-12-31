@@ -124,4 +124,6 @@ return [
     ],
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    'ai_api_key'=>env('AI_API_KEY') ,
 ];

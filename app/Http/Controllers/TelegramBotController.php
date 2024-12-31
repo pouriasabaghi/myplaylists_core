@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\AiInterface;
 use App\Models\User;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
@@ -28,7 +29,7 @@ class TelegramBotController extends Controller
         $this->chatId = $this->message->getChat()->getId();
     }
 
-    public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService)
+    public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
             // get user by telegram username 
@@ -75,12 +76,15 @@ class TelegramBotController extends Controller
                 // response success message
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "🟢 Song has been uploaded successfully.",
+                    'text' => "🟢 Song has been uploaded successfully. wait for link...",
                 ]);
+
+                $prompt =  "نظرت رو راجب آهنگ {$song->name} از {$song->artist} بگو اگر احساس میکنی که نام خواننده یا آلبوم بی ربط است دقیقا این جلمه رو بگو *پیشنهاد میکنم که برای کاربری بهتر در نرم افزار حتما اطلاعات آهنگ مثل نام، اسم آلبوم و نام خواننده رو به اطلاعات صحیح ویرایش بکنید.* لطفا بدون هیچ کلمه کم زیادی متن بین * رو بگو";
+                $aiOpinion = $aiService->generateContent($prompt);
 
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "🎧 Song:\n {$song->direct_link}",
+                    'text' => "🎧 Song:\n {$song->direct_link} \n \n $aiOpinion ",
                 ]);
 
                 return;
