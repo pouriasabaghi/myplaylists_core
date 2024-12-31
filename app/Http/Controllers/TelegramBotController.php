@@ -80,7 +80,7 @@ class TelegramBotController extends Controller
                 ]);
 
                 $prompt = "نظرت رو راجب آهنگ {$song->name} از {$song->artist} بگو اگر احساس میکنی که نام خواننده یا آلبوم بی ربط است دقیقا این جلمه رو بگو * پیشنهاد میکنم که برای کاربری بهتر در نرم افزار حتما اطلاعات آهنگ مثل نام، اسم آلبوم و نام خواننده رو به اطلاعات صحیح ویرایش بکنید.* لطفا بدون هیچ کلمه کم زیادی متن بین * رو بگو";
-                $aiOpinion = "به نظر من ";
+                $aiOpinion = "راجب آهنگ: ";
                 $aiOpinion .= $aiService->generateContent($prompt);
 
                 if (str_contains($aiOpinion, 'پیشنهاد')) {
