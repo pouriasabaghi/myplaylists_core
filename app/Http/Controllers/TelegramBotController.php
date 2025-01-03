@@ -21,7 +21,7 @@ class TelegramBotController extends Controller
 
     public function __construct()
     {
-        /*  $this->telegram = Telegram::bot('mybot');
+         $this->telegram = Telegram::bot('mybot');
 
          $update = $this->telegram->getWebhookUpdate();
 
@@ -29,16 +29,12 @@ class TelegramBotController extends Controller
 
          $this->user = $this->message->from;
 
-         $this->chatId = $this->message->getChat()->getId(); */
+         $this->chatId = $this->message->getChat()->getId();
     }
 
     public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
-            $this->telegram->sendMessage([
-                'chat_id' => $this->chatId,
-                'text' => "on maintenance",
-            ]);
             // get user by telegram username 
             $user = User::firstWhere('telegram_username', $this->user->username);
             if ($this->message->getText() === '/start') {
