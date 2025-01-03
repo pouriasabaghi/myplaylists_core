@@ -5,5 +5,5 @@ interface AiInterface
 {
     public function generateContent(string $sting): string;
 
-    public function textJsonToArray(string $jsonText): array;
+    public function textJsonToArray(string $jsonText);
 }

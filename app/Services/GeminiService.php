@@ -39,7 +39,7 @@ class GeminiService implements AiInterface
      * convert json text to array
      * @return array
      */
-    public function textJsonToArray(string $jsonText): array
+    public function textJsonToArray(string $jsonText)
     {
 
         $jsonResponse = preg_replace('/```(?:json)?|```/', '', $jsonText);
