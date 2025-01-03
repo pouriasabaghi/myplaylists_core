@@ -12,7 +12,7 @@ class Playlist extends Model
     protected function directLink(): Attribute
     {
         return Attribute::make(
-            get: fn($value, $attributes) => config('app.frontend_url') . "/playlists/{$attributes['id']}",
+            get: fn($value, $attributes) => config('app.frontend_url') . "/playlists/{$attributes['id']}/{$attributes['name']}",
         );
     }
 
