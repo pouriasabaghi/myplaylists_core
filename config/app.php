@@ -125,5 +125,7 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
-    'ai_api_key'=>env('AI_API_KEY') ,
+    'ai_api_key' => env('AI_API_KEY'),
+
+    'ai_search_prompt' => " میخوام بر اساس این متن برام یک جی سان برگردونی به این شکل که { value:'', type:''} مقدار type یا lyrics هستش یا link یا playlist مقدار value اسم آهنگ یا پلی لیست هستش.اگر کلمه پلی لیست داخل متن وجود داشت اولویت داره و حتما type برابر با playlist میشه. اگر کلمه متن داخلش وجود داشت حتما type برابر با lyrics میشه متنم این هستش",
 ];

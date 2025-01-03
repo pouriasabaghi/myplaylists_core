@@ -21,15 +21,15 @@ class TelegramBotController extends Controller
 
     public function __construct()
     {
-         $this->telegram = Telegram::bot('mybot');
+        $this->telegram = Telegram::bot('mybot');
 
-         $update = $this->telegram->getWebhookUpdate();
+        $update = $this->telegram->getWebhookUpdate();
 
-         $this->message = $update->getMessage();
+        $this->message = $update->getMessage();
 
-         $this->user = $this->message->from;
+        $this->user = $this->message->from;
 
-         $this->chatId = $this->message->getChat()->getId();
+        $this->chatId = $this->message->getChat()->getId();
     }
 
     public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
@@ -156,7 +156,7 @@ class TelegramBotController extends Controller
 
     public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedRequest)
     {
-        $prompt = "میخوام بر اساس این متن برام یک جی سان  برگردونی به این شکل که {type:'', value:''} مقدار type یا lyrics هستش یا link یا playlist مقدار value اسم آهنگ یا پلی لیست هستش.اگر کلمه پلی لیست داخل متن وجود داشت اولویت داره و حتما type برابر با playlist میشه. متنم این هستش:‌";
+        $prompt = config('app.ai_prompt');
         $prompt .= $userAskedRequest;
         $aiResponse = $aiService->generateContent($prompt);
         $arrayResponse = $aiService->textJsonToArray($aiResponse);
