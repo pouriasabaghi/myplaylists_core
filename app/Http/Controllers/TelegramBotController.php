@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Interfaces\AiInterface;
+use App\Models\Playlist;
+use App\Models\Song;
 use App\Models\User;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -18,15 +21,15 @@ class TelegramBotController extends Controller
 
     public function __construct()
     {
-        $this->telegram = Telegram::bot('mybot');
+        /*  $this->telegram = Telegram::bot('mybot');
 
-        $update = $this->telegram->getWebhookUpdate();
+         $update = $this->telegram->getWebhookUpdate();
 
-        $this->message = $update->getMessage();
+         $this->message = $update->getMessage();
 
-        $this->user = $this->message->from;
+         $this->user = $this->message->from;
 
-        $this->chatId = $this->message->getChat()->getId();
+         $this->chatId = $this->message->getChat()->getId(); */
     }
 
     public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
@@ -150,19 +153,75 @@ class TelegramBotController extends Controller
         ]);
     }
 
-    public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedPrompt)
+    public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedRequest)
     {
-        $appUrl = env('APP_URL_WITH_PORT');
-        $result = \Illuminate\Support\Facades\DB::table('songs')
-            ->selectRaw("GROUP_CONCAT(CONCAT(name, ' by ', artist, ', link: ', CONCAT('$appUrl/songs/', id)) SEPARATOR '\n') AS songs_list")
-            ->first();
-
-        $songsLists = $result->songs_list ?? '';
-        $prompt = "این لیست آهنگ های من هستش \n $songsLists \n";
-        $prompt .= $userAskedPrompt;
+        $prompt = "میخوام بر اساس این متن برام یک جی سان  برگردونی به این شکل که {type:'', value:''} مقدار type یا lyrics هستش یا link یا playlist مقدار value اسم آهنگ یا پلی لیست هستش.اگر کلمه پلی لیست داخل متن وجود داشت اولویت داره و حتما type برابر با playlist میشه. متنم این هستش:‌";
+        $prompt .= $userAskedRequest;
         $aiResponse = $aiService->generateContent($prompt);
-        return $aiResponse;
+        $arrayResponse = $aiService->textJsonToArray($aiResponse);
+
+        if (is_array($arrayResponse) && !empty($arrayResponse['type']) && !empty($arrayResponse['value'])) {
+            $type = $arrayResponse['type'];
+            $value = $arrayResponse['value'];
+
+            if ($type === 'link') {
+                $songs = Song::where('name', 'like', "%{$value}%")->orWhere('artist', 'like', "%{$value}%")->take(10)->get(['id', 'name', 'lyrics', 'artist']);
+                $message = $this->responseMessage($songs, 'link');
+                return $message;
+            }
+
+            if ($type === 'lyrics') {
+                $songs = Song::where('name', 'like', "%{$value}%")->take(1)->get(['id', 'name', 'lyrics', 'artist']);
+                $message = $this->responseMessage($songs, 'lyrics');
+                return $message;
+            }
+
+            if ($type === 'playlist') {
+                $playlists = Playlist::where('name', 'like', "%{$value}%")->take(10)->get(['id', 'name']);
+                $message = $this->responseMessage($playlists, 'playlist');
+                return $message;
+            }
+
+
+            throw new \Exception('Invalid type', 400);
+        }
+
+        return "Sorry I can't understand your request";
     }
 
+    protected function responseMessage(Collection $data, string $type = '')
+    {
+        if (!$data->count())
+            return $message = "Sorry i didn't find any thing";
+
+        $message = '';
+
+        if ($type === 'playlist') {
+            if ($data->count() > 1)
+                $message = "🟣 here is founded playlists: \n\n";
+            foreach ($data as $key => $playlist) {
+                $key++;
+                $message .= "$key. 🎶 {$playlist->name} \n 🔗 {$playlist->directLink} \n\n";
+            }
+        }
+
+        if ($type === 'link') {
+            if ($data->count() > 1)
+                $message = "🟣 here is founded songs: \n\n";
+
+            foreach ($data as $key => $song) {
+                $key++;
+                $message .= "$key. 🎧 {$song->name} \n 🔗 {$song->directLink} \n\n";
+            }
+        }
+
+        if ($type === 'lyrics') {
+            foreach ($data as $song) {
+                $message .= "🎧 {$song->name} \n 🔗 {$song->directLink} \n\n {$song->lyrics}";
+            }
+        }
+
+        return $message;
+    }
 
 }

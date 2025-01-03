@@ -33,4 +33,17 @@ class GeminiService implements AiInterface
 
         return $response->json('candidates.0.content.parts.0.text');
     }
+
+
+    /**
+     * convert json text to array
+     * @return array
+     */
+    public function textJsonToArray(string $jsonText): array
+    {
+
+        $jsonResponse = preg_replace('/```(?:json)?|```/', '', $jsonText);
+        $arrayResponse = json_decode($jsonResponse, true);
+        return $arrayResponse;
+    }
 }
