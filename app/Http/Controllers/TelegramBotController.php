@@ -156,7 +156,7 @@ class TelegramBotController extends Controller
 
     public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedRequest)
     {
-        $prompt = config('app.ai_prompt');
+        $prompt = config('app.ai_search_prompt');
         $prompt .= $userAskedRequest;
         $aiResponse = $aiService->generateContent($prompt);
         $arrayResponse = $aiService->textJsonToArray($aiResponse);
