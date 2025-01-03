@@ -98,6 +98,14 @@ class TelegramBotController extends Controller
 
                 return;
             } else {
+                if($user && is_string($this->message->getText())){
+                    $this->telegram->sendMessage([
+                        'chat_id' => $this->chatId,
+                        'text' =>$this->aiResponseBaseOnUserData($aiService, $this->message->getText()),
+                    ]);
+                    return;
+                }
+                
                 $this->commandNotFound();
                 return;
             }
@@ -140,6 +148,19 @@ class TelegramBotController extends Controller
             'chat_id' => $this->chatId,
             'text' => "😐 hmmm what are you talking about? Send me a song",
         ]);
+    }
+
+    public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedPrompt)
+    {
+        $appUrl = env('APP_URL_WITH_PORT');
+        $songsLists = \Illuminate\Support\Facades\DB::table('songs')
+            ->selectRaw("GROUP_CONCAT(CONCAT(name, ' by ', artist, ', link: ', CONCAT('$appUrl/songs/', id)) SEPARATOR '\n') AS songs_list")
+            ->first();
+
+        $prompt = "این لیست آهنگ های من هستش \n $songsLists \n";
+        $prompt .= $userAskedPrompt;
+        $aiResponse = $aiService->generateContent($prompt);
+        return $aiResponse;
     }
 
 
