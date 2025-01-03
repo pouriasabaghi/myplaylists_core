@@ -166,7 +166,7 @@ class TelegramBotController extends Controller
             $value = $arrayResponse['value'];
 
             if ($type === 'link') {
-                $songs = Song::where('name', 'like', "%{$value}%")->orWhere('artist', 'like', "%{$value}%")->take(10)->get(['id', 'name', 'lyrics', 'artist']);
+                $songs = Song::where('name', 'like', "%{$value}%")->orWhere('artist', 'like', "%{$value}%")->take(20)->get(['id', 'name', 'lyrics', 'artist']);
                 $message = $this->responseMessage($songs, 'link');
                 return $message;
             }
@@ -178,7 +178,7 @@ class TelegramBotController extends Controller
             }
 
             if ($type === 'playlist') {
-                $playlists = Playlist::where('name', 'like', "%{$value}%")->take(10)->get(['id', 'name']);
+                $playlists = Playlist::where('name', 'like', "%{$value}%")->take(20)->get(['id', 'name']);
                 $message = $this->responseMessage($playlists, 'playlist');
                 return $message;
             }
