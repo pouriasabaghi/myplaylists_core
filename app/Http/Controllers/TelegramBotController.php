@@ -98,14 +98,14 @@ class TelegramBotController extends Controller
 
                 return;
             } else {
-                if($user && is_string($this->message->getText())){
+                if ($user && is_string($this->message->getText())) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' =>$this->aiResponseBaseOnUserData($aiService, $this->message->getText()),
+                        'text' => $this->aiResponseBaseOnUserData($aiService, $this->message->getText()),
                     ]);
                     return;
                 }
-                
+
                 $this->commandNotFound();
                 return;
             }
@@ -153,10 +153,11 @@ class TelegramBotController extends Controller
     public function aiResponseBaseOnUserData(AiInterface $aiService, string $userAskedPrompt)
     {
         $appUrl = env('APP_URL_WITH_PORT');
-        $songsLists = \Illuminate\Support\Facades\DB::table('songs')
+        $result = \Illuminate\Support\Facades\DB::table('songs')
             ->selectRaw("GROUP_CONCAT(CONCAT(name, ' by ', artist, ', link: ', CONCAT('$appUrl/songs/', id)) SEPARATOR '\n') AS songs_list")
             ->first();
 
+        $songsLists = $result->songs_list ?? '';
         $prompt = "این لیست آهنگ های من هستش \n $songsLists \n";
         $prompt .= $userAskedPrompt;
         $aiResponse = $aiService->generateContent($prompt);
