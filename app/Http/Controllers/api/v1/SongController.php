@@ -15,7 +15,7 @@ class SongController extends Controller
 {
     public function index(): JsonResponse
     {
-        $songs = auth()->user()->songs()->get();
+        $songs = auth()->user()->songs()->latest()->get();
         return response()->json(SongResource::collection($songs));
     }
 
