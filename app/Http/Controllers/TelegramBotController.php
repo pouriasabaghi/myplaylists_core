@@ -35,6 +35,10 @@ class TelegramBotController extends Controller
     public function handle(Request $request, TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
+            $this->telegram->sendMessage([
+                'chat_id' => $this->chatId,
+                'text' => "on maintenance",
+            ]);
             // get user by telegram username 
             $user = User::firstWhere('telegram_username', $this->user->username);
             if ($this->message->getText() === '/start') {
@@ -102,9 +106,10 @@ class TelegramBotController extends Controller
                 return;
             } else {
                 if ($user && is_string($this->message->getText())) {
+                    $text = $this->aiResponseBaseOnUserData($aiService, $this->message->getText());
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' => $this->aiResponseBaseOnUserData($aiService, $this->message->getText()),
+                        'text' => $text,
                     ]);
                     return;
                 }
