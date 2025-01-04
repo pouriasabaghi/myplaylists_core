@@ -16,6 +16,7 @@ Route::post('/songs/bulk-delete', [\App\Http\Controllers\api\v1\SongController::
 Route::prefix('songs')->group(function () {
     Route::get('/{song}', [\App\Http\Controllers\api\v1\SongController::class, 'show']);
     Route::get('/{id}/stream', [\App\Http\Controllers\api\v1\SongController::class, 'stream']);
+    Route::get('/{id}/download', [\App\Http\Controllers\api\v1\SongController::class, 'download']);
 });
 
 Route::get('/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'index'])->middleware('auth:sanctum');

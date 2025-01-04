@@ -172,23 +172,23 @@ class SongService
     {
         $song = Song::findOrFail($id);
         $path = $song->path;
-    
+
         if (!Storage::disk('public')->exists($path)) {
             return response()->json(['message' => 'File not found'], 404);
         }
-    
+
         $fullPath = Storage::disk('public')->path($path);
         $fileSize = filesize($fullPath);
-    
+
         // Check if the request has a Range header
         if (request()->hasHeader('Range')) {
             $range = request()->header('Range');
             preg_match('/bytes=(\d+)-(\d*)/', $range, $matches);
-    
+
             $start = intval($matches[1]);
             $end = $matches[2] !== '' ? intval($matches[2]) : $fileSize - 1;
             $length = $end - $start + 1;
-    
+
             $headers = [
                 'Content-Type' => 'audio/mpeg',
                 'Content-Range' => "bytes $start-$end/$fileSize",
@@ -196,7 +196,7 @@ class SongService
                 'Accept-Ranges' => 'bytes',
                 'Content-Disposition' => 'inline; filename="' . basename($fullPath) . '"',
             ];
-    
+
             return response()->stream(function () use ($fullPath, $start, $length) {
                 $file = fopen($fullPath, 'rb');
                 fseek($file, $start);
@@ -204,7 +204,7 @@ class SongService
                 fclose($file);
             }, 206, $headers); // 206 Partial Content
         }
-    
+
         // If no Range header is present, serve the whole file
         return response()->stream(function () use ($fullPath) {
             $file = fopen($fullPath, 'rb');
@@ -215,6 +215,20 @@ class SongService
             'Content-Length' => $fileSize,
             'Accept-Ranges' => 'bytes',
             'Content-Disposition' => 'inline; filename="' . basename($fullPath) . '"',
+        ]);
+    }
+
+    public function downloadHandler($id)
+    {
+        $song = Song::findOrFail($id);
+        $path = $song->path;
+
+        if (!Storage::disk('public')->exists($path))
+            return response()->json(['message' => 'File not found'], 404);
+
+        return Storage::disk('public')->response($path, $song->name, [
+            'Content-Type' => 'audio/mpeg',
+            'Accept-Ranges' => 'bytes',
         ]);
     }
 

@@ -153,6 +153,10 @@ class SongController extends Controller
         return $songService->streamHandler($id);
     }
 
+    public function download(string $id, SongService $songService){
+        return $songService->downloadHandler($id);
+    }
+
     public function getTopSongs()
     {
         $mostFavoritesSongs = Song::withCount('favorites')
