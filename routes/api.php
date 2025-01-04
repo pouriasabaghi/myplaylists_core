@@ -42,3 +42,7 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/search', [App\Http\Controllers\api\v1\SearchController::class, 'search']);
+
+Route::prefix('admin')->middleware('admin')->group(function(){
+    Route::apiResource('/users', App\Http\Controllers\api\v1\UserController::class)->middleware('auth:sanctum');
+});
