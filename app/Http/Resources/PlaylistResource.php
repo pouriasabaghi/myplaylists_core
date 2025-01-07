@@ -14,7 +14,7 @@ class PlaylistResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $cover = $this->songs()->whereNotNull('cover')->orderByDesc('id')->first()?->cover;
+        $cover = $this->songs()->whereNotNull('cover')->get()->last()?->cover;
         
         return [
             'id' => $this->id,
