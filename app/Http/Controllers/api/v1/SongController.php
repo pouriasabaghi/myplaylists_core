@@ -31,7 +31,7 @@ class SongController extends Controller
 
             // Validate the file
             $data = $request->validate([
-                'file' => 'required|mimetypes:audio/mpeg,audio/wav,audio/ogg',
+                'file' => 'required|mimetypes:audio/mpeg,audio/wav,audio/ogg,audio/x-m4a',
             ]);
             $file = $data['file'];
 
