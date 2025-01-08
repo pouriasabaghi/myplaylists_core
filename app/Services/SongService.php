@@ -99,7 +99,7 @@ class SongService
                 // Extract the filename from the URL
                 $urlPath = parse_url($fileOrUrl, PHP_URL_PATH);
                 $filename = pathinfo($urlPath, PATHINFO_FILENAME);
-                $extension = pathinfo($urlPath, PATHINFO_EXTENSION) ?? 'mp3';
+                $extension = pathinfo($urlPath, PATHINFO_EXTENSION) === 'bin' ? 'mp3' : pathinfo($urlPath, PATHINFO_EXTENSION);
 
                 // Create a unique filename if needed
                 $uploadFilename = "$filename.$extension";
