@@ -63,6 +63,10 @@ class TelegramBotController extends Controller
 
                 // get file url
                 $file = $this->telegram->getFile(['file_id' => $fileId]);
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
+                    'text' => "Test: {$file}...",
+                ]);
                 $fileUrl = $telegramBotService::getFileUrl($file);
 
                 //  check for upload limitation
