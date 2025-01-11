@@ -71,7 +71,7 @@ class SongController extends Controller
         try {
             $song = Song::findOrFail($id);
 
-            if ($song->user_id !== auth()->user()->id) {
+            if ($song->user_id !== auth()->user()->id && auth()->user()->role !== 'admin') {
                 return response()->json([
                     'message' => 'Only owner can make these changes',
                     'success' => false
