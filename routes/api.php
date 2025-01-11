@@ -42,8 +42,14 @@ Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
 
 });
 
-Route::get('/search', [App\Http\Controllers\api\v1\SearchController::class, 'search']);
+Route::get('/search', [App\Http\Controllers\api\v1\SearchController::class, 'search'])->middleware('auth:sanctum');
 
-Route::prefix('admin')->middleware('admin')->group(function(){
-    Route::apiResource('/users', App\Http\Controllers\api\v1\UserController::class)->middleware('auth:sanctum');
+Route::prefix('admin')->middleware('admin')->group(function () {
+    Route::apiResource('/users', App\Http\Controllers\api\v1\UserController::class);
+    Route::post('artists/{artistName}/cover', [App\Http\Controllers\api\v1\ArtistController::class, 'updateCover']);
+});
+
+Route::prefix('artists')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [App\Http\Controllers\api\v1\ArtistController::class, 'index']);
+    Route::get('/{artistName}', [App\Http\Controllers\api\v1\ArtistController::class, 'getSongs']);
 });
