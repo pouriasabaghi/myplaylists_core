@@ -9,6 +9,7 @@ Route::get('/user', function (Request $request) {
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show', 'stream'])->middleware('auth:sanctum');
 Route::get('/songs/top-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getTopSongs'])->middleware('auth:sanctum');
+Route::get('/songs/latest-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getLatestSongs'])->middleware('auth:sanctum');
 Route::post('/songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle'])->middleware('auth:sanctum');
 Route::post('/songs/bulk-delete', [\App\Http\Controllers\api\v1\SongController::class, 'bulkDestroy'])->middleware('auth:sanctum');
 
@@ -26,6 +27,7 @@ Route::get('playlists/{playlist}/songs', [App\Http\Controllers\api\v1\PlaylistCo
 
 Route::prefix('playlists')->middleware('auth:sanctum')->group(function () {
     Route::get('/top-playlists', [App\Http\Controllers\api\v1\PlaylistController::class, 'getTopPlaylists']);
+    Route::get('/latest-playlists', [App\Http\Controllers\api\v1\PlaylistController::class, 'getLatestPlaylists']);
 
     Route::get('/follow', [App\Http\Controllers\api\v1\FollowController::class, 'index']);
     Route::post('/{playlist}/follow', [App\Http\Controllers\api\v1\FollowController::class, 'toggle']);

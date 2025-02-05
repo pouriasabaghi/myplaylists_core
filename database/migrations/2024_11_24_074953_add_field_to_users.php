@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('telegram_username')->nullable();
-            $table->string('role')->enum(['listener', 'artist', 'admin'])->default('listener');
+            $table->string('role')->default('listener'); // ['listener', 'artist', 'admin']
         });
     }
 
@@ -22,7 +22,8 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn('telegram_username');
+            $table->dropColumn('role');
         });
     }
 };

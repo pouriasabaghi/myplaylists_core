@@ -156,5 +156,10 @@ class PlaylistController extends Controller
     
         return response()->json(PlaylistResource::collection($mostFollowedPlaylists));
     }
+
+    public function getLatestPlaylists(){
+        $latestPlaylists = Playlist::orderByDesc('created_at')->take(10)->get();
+        return response()->json(PlaylistResource::collection($latestPlaylists));
+    }
     
 }

@@ -166,4 +166,9 @@ class SongController extends Controller
 
         return response()->json(SongResource::collection($mostFavoritesSongs));
     }
+
+    public function getLatestSongs(){
+        $latestSong = Song::orderByDesc('created_at')->take(30)->get();
+        return response()->json($latestSong);
+    }
 }
