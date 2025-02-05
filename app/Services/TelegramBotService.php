@@ -2,8 +2,6 @@
 namespace App\Services;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Telegram\Bot\Laravel\Facades\Telegram;
-use Illuminate\Support\Facades\Http;
 use Telegram\Bot\Objects\File;
 
 class TelegramBotService

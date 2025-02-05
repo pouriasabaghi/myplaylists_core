@@ -40,7 +40,7 @@ class TelegramBotController extends Controller
             if ($this->message->getText() === '/start') {
                 $this->sendWelcomeMessage($user?->id);
             } elseif ($this->message->getAudio()) {
-                // user is'nt registered
+                // user isn't registered
                 if (!$user) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
@@ -124,7 +124,7 @@ class TelegramBotController extends Controller
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
             $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
         } else {
-            $welcomeText .= "😥 Your account is'nt registered t.me/p_nightwolf";
+            $welcomeText .= "😥 Your account isn't registered t.me/p_nightwolf";
         }
 
 
