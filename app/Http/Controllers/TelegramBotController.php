@@ -11,23 +11,26 @@ use App\Services\TelegramBotService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use Telegram\Bot\Keyboard\Keyboard;
 
 class TelegramBotController extends Controller
 {
     public $telegram;
     public $message;
-    public $user;
+    public $account;
     public $chatId;
+    public $update;
+    public $user;
 
     public function __construct()
     {
         $this->telegram = Telegram::bot('mybot');
 
-        $update = $this->telegram->getWebhookUpdate();
+        $this->update = $this->telegram->getWebhookUpdate();
 
-        $this->message = $update->getMessage();
+        $this->message = $this->update->getMessage();
 
-        $this->user = $this->message->from;
+        $this->account = $this->message->from;
 
         $this->chatId = $this->message->getChat()->getId();
     }
@@ -36,7 +39,16 @@ class TelegramBotController extends Controller
     {
         try {
             // get user by telegram username 
-            $user = User::firstWhere('telegram_username', $this->user->username);
+            $user = $this->getUser($this->account->username);
+
+            if ($this->update->has('callback_query')) {
+                $callbackQuery = $this->update->getCallbackQuery();
+                $callbackData = $callbackQuery->getData();
+
+                $this->runCommand($callbackData);
+                return;
+            }
+
             if ($this->message->getText() === '/start') {
                 $this->sendWelcomeMessage($user?->id);
             } elseif ($this->message->getAudio()) {
@@ -56,14 +68,14 @@ class TelegramBotController extends Controller
                 $fileId = $audio->getFileId();
 
                 // send loading text
-                $this->telegram->sendMessage([
+                $songUploadingMessage = $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
                     'text' => "Uploading {$audio->getTitle()}...",
                 ]);
 
                 // get file url
                 $file = $this->telegram->getFile(['file_id' => $fileId]);
-              
+
                 $fileUrl = $telegramBotService::getFileUrl($file);
 
                 //  check for upload limitation
@@ -78,14 +90,32 @@ class TelegramBotController extends Controller
                 $song = $songService->createSongFromTelegramBot($fileUrl, $audio, $user);
 
                 // response success message
-                $this->telegram->sendMessage([
+                $songUploadedMessage = $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "🟢 Song has been uploaded successfully. wait for link...",
+                    'text' => "🟢 Song has been uploaded successfully. wait for link....",
                 ]);
+
+                //  delete and cleanup messages
+                $this->telegram->deleteMessage([
+                    'chat_id' => $this->chatId,
+                    'message_id' => $songUploadingMessage->getMessageId(),
+                ]);
+                $this->telegram->deleteMessage([
+                    'chat_id' => $this->chatId,
+                    'message_id' => $songUploadedMessage->getMessageId(),
+                ]);
+
 
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
                     'text' => "🎧 Song:\n {$song->name} \n {$song->direct_link}",
+                    'reply_markup' => Keyboard::make([
+                        'inline_keyboard' => [
+                            [
+                                ['text' => 'Add To Playlist', 'callback_data' => "showPlaylists:{$user->telegram_username}:{$song->id}"],
+                            ]
+                        ]
+                    ])
                 ]);
 
                 return;
@@ -118,7 +148,7 @@ class TelegramBotController extends Controller
      */
     public function sendWelcomeMessage(int|null $userId)
     {
-        $welcomeText = "👋 Hello {$this->user->username}. \n\n";
+        $welcomeText = "👋 Hello {$this->account->username}. \n\n";
 
         if ($userId) {
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
@@ -176,19 +206,19 @@ class TelegramBotController extends Controller
             throw new \Exception('Invalid type', 400);
         }
 
-        return "Sorry I can't understand your request";
+        return "Sorry I can't understand your request 😥";
     }
 
     protected function responseMessage(Collection $data, string $type = '')
     {
         if (!$data->count())
-            return $message = "Sorry i didn't find any thing";
+            return $message = "Sorry I didn't find any thing 🔎";
 
         $message = '';
 
         if ($type === 'playlist') {
             if ($data->count() > 1)
-                $message = "🟣 here is founded playlists: \n\n";
+                $message = "🟣 Here is founded playlists: \n\n";
             foreach ($data as $key => $playlist) {
                 $key++;
                 $message .= "$key. 🎶 {$playlist->name} \n 🔗 {$playlist->directLink} \n\n";
@@ -197,7 +227,7 @@ class TelegramBotController extends Controller
 
         if ($type === 'link') {
             if ($data->count() > 1)
-                $message = "🟣 here is founded songs: \n\n";
+                $message = "🟣 Here is founded songs: \n\n";
 
             foreach ($data as $key => $song) {
                 $key++;
@@ -214,4 +244,79 @@ class TelegramBotController extends Controller
         return $message;
     }
 
+    public function getUser($telegramUsername)
+    {
+        return User::firstWhere('telegram_username', $telegramUsername);
+    }
+
+    public function playlistsInlineKeyboard($user, $buttonsPerRow = 2, $additionalData = null)
+    {
+        $playlists = $user->playlists;
+        $buttons = [];
+
+
+        foreach ($playlists as $playlist) {
+            $callbackData = "addToPlaylist:{$user->telegram_username}:{$playlist->id}";
+
+            if ($additionalData)
+                $callbackData .= (string) $additionalData;
+
+            $buttons[] = [
+                'text' => $playlist->name,
+                'callback_data' => $callbackData,
+            ];
+        }
+
+        // buttons per row 
+        return array_chunk($buttons, $buttonsPerRow);
+    }
+
+    public function runCommand($command)
+    {
+        $command = explode(':', $command);
+
+        $commandName = $command[0];
+
+        unset($command[0]);
+        $commandData = $command;
+
+        call_user_func([$this, $commandName], ...$commandData);
+    }
+
+    public function showPlaylists($telegramUsername, $songId)
+    {
+        $user = $this->getUser($telegramUsername);
+        $playlistsInlineKeyboard = $this->playlistsInlineKeyboard($user, 4, ":$songId");
+
+        $replyMarkup = Keyboard::make([
+            'inline_keyboard' => $playlistsInlineKeyboard
+        ]);
+        $this->telegram->sendMessage([
+            'chat_id' => $this->chatId,
+            'text' => "Select your playlist 👇",
+            'reply_markup' => $replyMarkup,
+        ]);
+    }
+
+    public function addToPlaylist($telegramUsername, $playlistId, $songId)
+    {
+        $user = $this->getUser($telegramUsername);
+        $playlist = Playlist::findOrFail($playlistId);
+        $song = Song::findOrFail($songId);
+
+        if ($song->user_id !== $user->id || $playlist->user_id !== $user->id) {
+            $this->telegram->sendMessage([
+                'chat_id' => $this->chatId,
+                'text' => "Only owner can make these changes",
+            ]);
+            return;
+        }
+
+        $playlist->songs()->attach($song);
+        $this->telegram->sendMessage([
+            'chat_id' => $this->chatId,
+            'text' => "✅ Song added to playlist successfully",
+        ]);
+        return;
+    }
 }
