@@ -38,7 +38,7 @@ class TelegramBotController extends Controller
             // get user by telegram username 
             $user = $this->getUser($this->account->username);
 
-            // check for callback queries
+            // check for callback queries and return 
             if ($this->update->has('callback_query')) {
                 $callbackQuery = $this->update->getCallbackQuery();
                 $callbackData = $callbackQuery->getData();
@@ -47,6 +47,7 @@ class TelegramBotController extends Controller
                 return;
             }
 
+            // check for inline queries and return 
             if ($this->update->has('inline_query')) {
                 $inlineQuery = $this->update->getInlineQuery();
                 $queryText = $inlineQuery->get('query');
@@ -55,17 +56,12 @@ class TelegramBotController extends Controller
                     return;
 
                 $telegramBotService->searchSongsInlineQuery($inlineQuery, $queryText, $this->chatId);
-
                 return;
-
             }
 
-            $payload = str_starts_with($this->message->getText(), '/start ')
-                ? str_replace('/start ', '', $this->message->getText())
-                : null;
-
-            if ($payload) {
-                $this->handlePayload($this->chatId, $payload);
+            // check for payload and return 
+            if (str_starts_with($this->message->getText(), '/start ') || str_starts_with($this->message->getText(), '/dl_')) {
+                $this->handlePayload($this->chatId, $this->message->getText());
                 return;
             }
 
@@ -75,7 +71,7 @@ class TelegramBotController extends Controller
                 return;
             }
 
-            // get audio and upload to site
+            // get audio and upload to site and return 
             if ($this->message->getAudio()) {
                 // user isn't registered
                 if (!$user) {
@@ -91,12 +87,13 @@ class TelegramBotController extends Controller
                 return;
             }
 
-            // user send text message 
-            if ($user && is_string($this->message->getText())) {
-                $text = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
-                $this->telegram->sendMessage([
+            // user send text message handle and return 
+            if (is_string($this->message->getText())) {
+                $response = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
+                $this->telegram->sendMessage( [
                     'chat_id' => $this->chatId,
-                    'text' => $text,
+                    'text' => $response['message'],
+                    'parse_mode'=>$response['type'] === 'link' ? 'HTML' : "Markdown",
                 ]);
                 return;
             }
@@ -166,9 +163,9 @@ class TelegramBotController extends Controller
             'parse_mode' => 'Markdown'
         ];
 
-        $params['title'] ??= $song->name;
-        $params['performer'] ??= $song->artist;
-        $params['thumb'] ??= InputFile::create($song->cover);
+        $params['title'] = $song->name;
+        $params['performer'] = $song->artist;
+        $params['thumb'] = InputFile::create($song->cover);
 
         $this->telegram->sendAudio($params);
     }

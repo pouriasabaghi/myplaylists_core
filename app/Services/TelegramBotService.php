@@ -34,18 +34,28 @@ class TelegramBotService
     public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
     {
         $welcomeText = "👋 Hello {$telegramUsername}. \n\n";
+        $welcomeText .= "🟣 Myplaylist is a music platform that you can create and share your playlist \n\n";
 
         if ($userId) {
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
             $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
         } else {
-            $welcomeText .= "😥 Your account isn't registered t.me/p_nightwolf";
+            $welcomeText .= "😥 Your account isn't registered send message to t.me/p_nightwolf";
         }
-
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => $welcomeText,
+            'reply_markup' => Keyboard::make([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => 'Search & Share Song 🔍',
+                            'switch_inline_query_current_chat' => 'gary moore'
+                        ]
+                    ]
+                ]
+            ])
         ]);
     }
 
@@ -71,21 +81,20 @@ class TelegramBotService
             if ($type === 'link') {
                 $songs = Song::where('name', 'like', "%{$value}%")->orWhere('artist', 'like', "%{$value}%")->take(20)->get(['id', 'name', 'lyrics', 'artist']);
                 $message = $this->responseMessage($songs, 'link');
-                return $message;
+                return compact('message', 'type');
             }
 
             if ($type === 'lyrics') {
                 $songs = Song::where('name', 'like', "%{$value}%")->take(1)->get(['id', 'name', 'lyrics', 'artist']);
                 $message = $this->responseMessage($songs, 'lyrics');
-                return $message;
+                return compact('message', 'type');
             }
 
             if ($type === 'playlist') {
                 $playlists = Playlist::where('name', 'like', "%{$value}%")->take(20)->get(['id', 'name']);
                 $message = $this->responseMessage($playlists, 'playlist');
-                return $message;
+                return compact('message', 'type');
             }
-
 
             throw new \Exception('Invalid type', 400);
         }
@@ -113,15 +122,17 @@ class TelegramBotService
             if ($data->count() > 1)
                 $message = "🟣 Here is founded songs: \n\n";
 
+            
             foreach ($data as $key => $song) {
+                $artist = "{$song->artist} -" ?? '';    
                 $key++;
-                $message .= "$key. 🎧 {$song->name} \n 🔗 {$song->directLink} \n\n";
+                $message .= "$key. 🎧 $artist {$song->name} \n🔗 {$song->directLink} \n📥 Download /dl_{$song->id}\n\n";
             }
         }
 
         if ($type === 'lyrics') {
             foreach ($data as $song) {
-                $message .= "🎧 {$song->name} \n 🔗 {$song->directLink} \n\n {$song->lyrics}";
+                $message .= "🎧 {$song->name} \n[🟣 Listen In Application]({$song->directLink})\n📥 [Download](https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id})\n\n{$song->lyrics}";
             }
         }
 
@@ -193,7 +204,6 @@ class TelegramBotService
         $playlists = $user->playlists;
         $buttons = [];
 
-
         foreach ($playlists as $playlist) {
             $callbackData = "addToPlaylist:{$user->telegram_username}:{$playlist->id}";
 
@@ -257,15 +267,15 @@ class TelegramBotService
             $album = $song->album ?? 'unknwon';
             $artist = $song->artist ?? 'unknown';
 
-            $results[] = new InlineQueryResultArticle([
+            $params = [
                 'id' => (string) $song->id,
-                'title' => $song->name . " - " . $chatId,
+                'title' => $song->name,
                 'description' => $song->artist ?? $song->album,
                 'input_message_content' => [
-                    'message_text' => "🎧 *{$song->name}* \n🗣{$artist}  \n💽 {$album} \n🟣 [Open Application]({$song->direct_link})",
+                    'message_text' => "🎧 *{$song->name}* \n🗣{$artist}  \n💽 {$album} \n[🟣 Listen In Application]({$song->direct_link})",
                     'parse_mode' => 'Markdown',
                 ],
-                'reply_markup'=>Keyboard::make([
+                'reply_markup' => Keyboard::make([
                     'inline_keyboard' => [
                         [
                             ['text' => '🎧 Listen', 'url' => $song->direct_link],
@@ -274,13 +284,17 @@ class TelegramBotService
                     ]
                 ])
 
-            ]);
+            ];
+
+            $params['thumb_url'] = $song->cover ?: "https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png";
+
+            $results[] = new InlineQueryResultArticle($params);
         }
 
         Telegram::answerInlineQuery([
             'inline_query_id' => $inlineQuery->get('id'),
             'results' => json_encode($results),
-            'cache_time' => 0,
+            //'cache_time' => 0,
         ]);
     }
 }
