@@ -35,6 +35,41 @@ class TelegramBotController extends Controller
     public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
+            // It's url 
+            if (str_starts_with($this->message->getText(), 'https://')) {
+                // supported sites
+                $allowedSites = [
+                    'https://soundcloud.com/' => 'soundcloud',
+                    'https://m.soundcloud.com/' => 'soundcloud',
+                    'https://on.soundcloud.com/' => 'soundcloud',
+                    'https://music.youtube.com/' => 'youtubemusic',
+                    'https://youtu.be/' => 'youtubemusic',
+                ];
+
+                // check for supported sites
+                foreach ($allowedSites as $site => $platform) {
+                    if (str_starts_with($this->message->getText(), $site)) {
+                        if ($platform === 'youtubemusic') {
+                           $telegramBotService->getFromYoutubeMusic($this->telegram, $this->chatId, $this->message->getText());
+                            return;
+                        }
+
+                        // Download from sound cloud
+                        if ($platform === 'soundcloud') {
+                            $telegramBotService->getFromSoundCloud($this->telegram, $this->chatId, $this->message->getText());
+                            return;
+                        }
+                    }
+                }
+
+                // no supported site found
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
+                    'text' => "Entered url is not valid.\nCurrently we support SoundCloud and YoutubeMusic.",
+                ]);
+                return ;
+            }
+
             // get user by telegram username 
             $user = $this->getUser($this->account->username);
 
@@ -90,10 +125,10 @@ class TelegramBotController extends Controller
             // user send text message handle and return 
             if (is_string($this->message->getText())) {
                 $response = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
-                $this->telegram->sendMessage( [
+                $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
                     'text' => $response['message'],
-                    'parse_mode'=>$response['type'] === 'link' ? 'HTML' : "Markdown",
+                    'parse_mode' => $response['type'] === 'link' ? 'HTML' : "Markdown",
                 ]);
                 return;
             }
