@@ -44,13 +44,14 @@ class TelegramBotController extends Controller
                     'https://on.soundcloud.com/' => 'soundcloud',
                     'https://music.youtube.com/' => 'youtubemusic',
                     'https://youtu.be/' => 'youtubemusic',
+                    'https://www.youtube.com/' => 'youtubemusic',
                 ];
 
                 // check for supported sites
                 foreach ($allowedSites as $site => $platform) {
                     if (str_starts_with($this->message->getText(), $site)) {
                         if ($platform === 'youtubemusic') {
-                           $telegramBotService->getFromYoutubeMusic($this->telegram, $this->chatId, $this->message->getText());
+                            $telegramBotService->getFromYoutubeMusic($this->telegram, $this->chatId, $this->message->getText());
                             return;
                         }
 
@@ -67,7 +68,7 @@ class TelegramBotController extends Controller
                     'chat_id' => $this->chatId,
                     'text' => "Entered url is not valid.\nCurrently we support SoundCloud and YoutubeMusic.",
                 ]);
-                return ;
+                return;
             }
 
             // get user by telegram username 
@@ -124,13 +125,19 @@ class TelegramBotController extends Controller
 
             // user send text message handle and return 
             if (is_string($this->message->getText())) {
-                $response = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
-                $this->telegram->sendMessage([
-                    'chat_id' => $this->chatId,
-                    'text' => $response['message'],
-                    'parse_mode' => $response['type'] === 'link' ? 'HTML' : "Markdown",
-                ]);
+                /* $telegramBotService->searchForSongFromOuterResources($this->telegram, $this->chatId, $this->message->getText());
+                return; */
+
+                $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $this->message->getText());
                 return;
+
+                /*  $response = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
+                 $this->telegram->sendMessage([
+                     'chat_id' => $this->chatId,
+                     'text' => $response['message'],
+                     'parse_mode' => $response['type'] === 'link' ? 'HTML' : "Markdown",
+                 ]);
+                 return; */
             }
 
             $telegramBotService->commandNotFound($this->telegram, $this->chatId);
@@ -203,5 +210,29 @@ class TelegramBotController extends Controller
         $params['thumb'] = InputFile::create($song->cover);
 
         $this->telegram->sendAudio($params);
+    }
+
+    // download form outer resources
+    public function dlOut($chatId, $identifier, $resource)
+    {
+        $telegramBotService = new TelegramBotService();
+        if ($resource == 'youtubemusic') {
+            $telegramBotService->getFromYoutubeMusic($this->telegram, $chatId, "https://www.youtube.com/watch?v=$identifier");
+            return;
+        }
+
+        return;
+    }
+
+    // search from outer resources
+    public function sOut($chatId, $identifier, $resource)
+    {
+        $telegramBotService = new TelegramBotService();
+        if ($resource == 'youtubemusic') {
+            $telegramBotService->searchForSongFromYoutubeMusic($this->telegram, $chatId, $identifier);
+            return;
+        }
+
+        return;
     }
 }

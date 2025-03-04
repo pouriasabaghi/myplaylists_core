@@ -299,11 +299,11 @@ class TelegramBotService
         ]);
     }
 
-    public function getFromSoundCloud($telegram, $chatId, $userEnteredUrl)
+    public function getFromSoundCloud($telegram, $chatId, $userEnteredUrl, $isUrl = true)
     {
         $dlFromScMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "⏳ Downloading From SoundCloud Server...",
+            'text' => "📥 Downloading From SoundCloud Server...",
         ]);
 
         if (str_starts_with($userEnteredUrl, 'https://on.soundcloud.com'))
@@ -313,12 +313,22 @@ class TelegramBotService
         $url = escapeshellarg($userEnteredUrl);
 
         // run scdl script and get output
-        $command = "/usr/local/bin/scdl -l $url --overwrite  2>&1";
+        $command = $isUrl ? "/usr/local/bin/scdl -l $url --overwrite  2>&1" : "/usr/local/bin/scdl -s $url -n 1  2>&1";
 
         // out put of scdl command contains
         $output = shell_exec($command);
 
+
         preg_match('/(.+?)\.(mp3|m4a|flac|opus)/', $output, $matches);
+
+        // alert user to prevent sending artist, album or other pages link
+        if (empty($matches[0])) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "⚠️ Invalid url \nPlease make sure it's a song page not artist or album \nIf you thing this is a bug please contact t.me/p_nightwolf",
+            ]);
+            return;
+        }
 
         $filenameWithExtension = trim($matches[0]) ?? null;
         // $filename = $matches[1];
@@ -368,7 +378,7 @@ class TelegramBotService
         // inform user that connecting is starting
         $cnToYmMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "🌐 Connecting to YouTube server...",
+            'text' => "⏳ Connecting to YouTube server...",
         ]);
 
         if (str_starts_with($userEnteredUrl, 'https://youtu.be'))
@@ -386,7 +396,7 @@ class TelegramBotService
         // Inform user that downloading song started
         $dlFromYmMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "⏳ Downloading " . basename($downloadedFile) . " From Youtube server....",
+            'text' => "📥 Downloading " . basename($downloadedFile) . " From Youtube server....",
         ]);
 
         // Step 2: Download the audio file using yt-dlp
@@ -429,7 +439,7 @@ class TelegramBotService
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "Failed to download audio. Please check the URL.",
+                'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact t.me/p_nightwolf",
             ]);
         }
     }
@@ -455,6 +465,111 @@ class TelegramBotService
         }
 
         return $shortUrl;
+    }
+
+    public function searchForSongFromYoutubeMusic($telegram, $chatId, $userEnteredText)
+    {
+
+        // prevent from sending shell
+        $escapedUserEnteredText = escapeshellarg($userEnteredText);
+
+        // for exploding title from url 
+        $separator = "|||";
+
+        // run scdl script and get output
+        $command = "yt-dlp ytsearch2:$escapedUserEnteredText --print '%(title)s$separator%(id)s'";
+
+        // inform user that search is in process
+        $stMessage = $telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => "⏳ Searching for $userEnteredText",
+        ]);
+
+        // out put of scdl command contains
+        $output = shell_exec($command);
+
+        if (empty($output)) {
+            $telegram->sendMessage([
+                "chat_id" => $chatId,
+                "text" => "Nothing found for $userEnteredText",
+            ]);
+            return;
+        }
+
+        // split output 
+        $results = explode("\n", $output);
+
+        // create inline keyboard
+        $inlineKeyboard = [];
+        foreach ($results as $result) {
+            $song = explode($separator, $result);
+
+            if (empty($song[0]))
+                continue;
+
+            $inlineKeyboard[] = [
+                [
+                    'text' => $song[0], // song title
+                    'callback_data' => "dlOut:{$chatId}:{$song[1]}:youtubemusic", // song id
+                ]
+            ];
+        }
+
+        $replyMarkup = Keyboard::make([
+            'inline_keyboard' => $inlineKeyboard,
+        ]);
+
+        // cleanup messages
+        $telegram->deleteMessage([
+            "chat_id" => $chatId,
+            "message_id" => $stMessage->getMessageId(),
+        ]);
+
+        $telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => "Founded songs for $userEnteredText 👇",
+            'reply_markup' => $replyMarkup,
+        ]);
+    }
+
+    public function searchForSongFromSiteArchive($telegram, $chatId, $userEnteredText)
+    {
+        $songs = Song::query()->where('name', 'LIKE', "%$userEnteredText%")->orWhere('artist', 'LIKE', "%$userEnteredText%")->take(10)->get();
+
+        // search through internet
+        $replayMarkup = Keyboard::make([
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🔎 Search The Internet',
+                        'callback_data' => "sOut:{$chatId}:{$userEnteredText}:youtubemusic"
+                    ],
+                ],
+            ],
+        ]);
+
+        if ($songs->count() === 0) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "🦦 Nothing found, For better result you can search through Internet",
+                "reply_markup" => $replayMarkup,
+            ]);
+            return;
+        }
+
+        $message = "🟣 Here is founded songs: \n\n";
+
+        foreach ($songs as $key => $song) {
+            $artist = "{$song->artist} -" ?? '';
+            $key++;
+            $message .= "$key. 🎧 $artist {$song->name} \n🔗 {$song->directLink} \n📥 Download /dl_{$song->id}\n\n";
+        }
+
+        $telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => $message,
+            "reply_markup" => $replayMarkup
+        ]);
     }
 
 }
