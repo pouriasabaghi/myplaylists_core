@@ -31,13 +31,46 @@ class AuthenticationController extends Controller
         ], 401);
     }
 
+    public function otp(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            ]);
+            $email = $data['email'];
+    
+            $code = rand(10000, 99999);
+            session()->put('code', $code);
+    
+            \Mail::to($email)->send(new \App\Mail\OTP($code));
+    
+            return response()->json([
+                'message' => "Code sent to $email, please also check your spam folder",
+                'success' => true,
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(data: [
+                'message' => $th->getMessage(),
+                'success' => false,
+            ]);
+        }
+    }
+
     public function register(Request $request)
     {
         $credentials = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
+            'code' => ['required', 'string'],
         ]);
+
+        $sentCode = session()->get('code');
+        $enteredCode = $credentials['code'];
+
+        if($sentCode != $enteredCode){
+            throw new \Exception("Code is not valid", 403);
+        }
 
         $user = User::create([
             'name' => $credentials['name'],
