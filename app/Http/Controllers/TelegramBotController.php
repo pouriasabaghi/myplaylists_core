@@ -125,19 +125,8 @@ class TelegramBotController extends Controller
 
             // user send text message handle and return 
             if (is_string($this->message->getText())) {
-                /* $telegramBotService->searchForSongFromOuterResources($this->telegram, $this->chatId, $this->message->getText());
-                return; */
-
                 $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $this->message->getText());
                 return;
-
-                /*  $response = $telegramBotService->aiResponseBaseOnUserData($aiService, $this->message->getText());
-                 $this->telegram->sendMessage([
-                     'chat_id' => $this->chatId,
-                     'text' => $response['message'],
-                     'parse_mode' => $response['type'] === 'link' ? 'HTML' : "Markdown",
-                 ]);
-                 return; */
             }
 
             $telegramBotService->commandNotFound($this->telegram, $this->chatId);
@@ -198,11 +187,18 @@ class TelegramBotController extends Controller
 
         $songUrl = config('app.app_url') . "/storage/{$song->path}";
 
+        $caption = "<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+
+        if ($song->lyrics) {
+            $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8')."...";
+            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+        }
+
         $params = [
             'chat_id' => $chatId,
             'audio' => InputFile::create($songUrl),
-            'caption' => "[🟣 Myplaylists](https://t.me/myplaylists_ir)",
-            'parse_mode' => 'Markdown'
+            'caption' => $caption,
+            'parse_mode' => 'HTML'
         ];
 
         $params['title'] = $song->name;

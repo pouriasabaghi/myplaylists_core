@@ -267,14 +267,24 @@ class TelegramBotService
         foreach ($songs as $song) {
             $album = $song->album ?? 'unknwon';
             $artist = $song->artist ?? 'unknown';
+            $title = $song->name;
+            $messageText = "🎧 <strong>{$song->name}</strong> \n🗣 $artist  \n💽 $album";
+
+            // add songs lyrics to message response
+            if ($song->lyrics){
+                $messageText .= "<blockquote expandable>{$song->lyrics}</blockquote>";
+                $title.=" - Lyrics";
+            }
+
+            $messageText .= "\n<a href='{$song->direct_link}'>🟣 Listen In Application</a>";
 
             $params = [
                 'id' => (string) $song->id,
-                'title' => $song->name,
+                'title' =>  $title,
                 'description' => $song->artist ?? $song->album,
                 'input_message_content' => [
-                    'message_text' => "🎧 *{$song->name}* \n🗣{$artist}  \n💽 {$album} \n[🟣 Listen In Application]({$song->direct_link})",
-                    'parse_mode' => 'Markdown',
+                    'message_text' => $messageText,
+                    'parse_mode' => 'HTML',
                 ],
                 'reply_markup' => Keyboard::make([
                     'inline_keyboard' => [

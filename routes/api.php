@@ -7,7 +7,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show', 'stream'])->middleware('auth:sanctum');
+Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show'])->middleware('auth:sanctum');
 Route::get('/songs/top-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getTopSongs'])->middleware('auth:sanctum');
 Route::get('/songs/latest-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getLatestSongs'])->middleware('auth:sanctum');
 Route::post('/songs/{id}/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'toggle'])->middleware('auth:sanctum');
