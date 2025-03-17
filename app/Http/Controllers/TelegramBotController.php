@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Song;
 use App\Models\User;
+use App\Models\TelegramUser;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
 use Telegram\Bot\FileUpload\InputFile;
@@ -35,6 +36,12 @@ class TelegramBotController extends Controller
     public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
+            TelegramUser::updateOrCreate(
+                ['chat_id' => $this->chatId],
+                ['username' => $this->account->username]
+            );
+            
+            
             // It's url 
             if (str_starts_with($this->message->getText(), 'https://')) {
                 // supported sites
@@ -95,7 +102,7 @@ class TelegramBotController extends Controller
                 return;
             }
 
-            // check for payload and return 
+            // check for payload and return "/start " has space after start
             if (str_starts_with($this->message->getText(), '/start ') || str_starts_with($this->message->getText(), '/dl_')) {
                 $this->handlePayload($this->chatId, $this->message->getText());
                 return;
@@ -103,6 +110,11 @@ class TelegramBotController extends Controller
 
             // send start message and return
             if ($this->message->getText() === '/start') {
+                TelegramUser::updateOrCreate(
+                    ['chat_id' => $this->chatId],
+                    ['username' => $this->account->username]
+                );
+                
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
                 return;
             }

@@ -24,6 +24,7 @@ class SongResource extends JsonResource
             'path' => $this->path,
             'favorite' => auth()->user()?->favorites()->where('song_id', $this->id)->exists(),
             'lyrics' => $this->lyrics,
+            'owner'=>$this->user->name,
             'is_owner' => $this->user_id === auth()->user()?->id,
         ];
     }

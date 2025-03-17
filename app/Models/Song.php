@@ -39,4 +39,9 @@ class Song extends Model
     {
         return $this->belongsToMany(User::class, 'favorites');
     }
+
+
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
 }
