@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('telegram_username')->nullable();
-            $table->string('role')->default('listener'); // ['listener', 'artist', 'admin']
+            $table->string('role')->default('listener'); // ['listener', 'uploader', 'premium', 'artist', 'admin']
         });
     }
 

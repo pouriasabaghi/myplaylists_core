@@ -38,12 +38,12 @@ class AuthenticationController extends Controller
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             ]);
             $email = $data['email'];
-    
+
             $code = rand(10000, 99999);
             session()->put('code', $code);
-    
+
             \Mail::to($email)->send(new \App\Mail\OTP($code));
-    
+
             return response()->json([
                 'message' => "Code sent to $email, please also check your spam folder",
                 'success' => true,
@@ -68,7 +68,7 @@ class AuthenticationController extends Controller
         $sentCode = session()->get('code');
         $enteredCode = $credentials['code'];
 
-        if($sentCode != $enteredCode){
+        if ($sentCode != $enteredCode) {
             throw new \Exception("Code is not valid", 403);
         }
 
@@ -76,6 +76,7 @@ class AuthenticationController extends Controller
             'name' => $credentials['name'],
             'email' => $credentials['email'],
             'password' => Hash::make($credentials['password']),
+            'role' => 'uploader',
         ]);
 
         Auth::login($user);

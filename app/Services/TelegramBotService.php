@@ -35,13 +35,13 @@ class TelegramBotService
     public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
     {
         $welcomeText = "👋 Hello {$telegramUsername}. \n\n";
-        $welcomeText .= "🟣 Myplaylist is a music platform that you can create and share your playlist \n\n";
+        $welcomeText .= "🟣 Myplaylist is a music platform that you can create and share your playlists \n\n";
 
         if ($userId) {
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
             $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
         } else {
-            $welcomeText .= "😥 Your account isn't registered send message to t.me/p_nightwolf";
+            $welcomeText .= "Your Telegram account is not registered in the system. However, you can still use all the features of the MyPlaylists bot and application. If you wish to upload a song via the bot, please contact support at t.me/p_nightwolf.";
         }
 
         $telegram->sendMessage([
@@ -58,6 +58,8 @@ class TelegramBotService
                 ]
             ])
         ]);
+
+
     }
 
     public function commandNotFound($telegram, $chatId)
@@ -271,16 +273,16 @@ class TelegramBotService
             $messageText = "🎧 <strong>{$song->name}</strong> \n🗣 $artist  \n💽 $album";
 
             // add songs lyrics to message response
-            if ($song->lyrics){
+            if ($song->lyrics) {
                 $messageText .= "<blockquote expandable>{$song->lyrics}</blockquote>";
-                $title.=" - Lyrics";
+                $title .= " - Lyrics";
             }
 
             $messageText .= "\n<a href='{$song->direct_link}'>🟣 Listen In Application</a>";
 
             $params = [
                 'id' => (string) $song->id,
-                'title' =>  $title,
+                'title' => $title,
                 'description' => $song->artist ?? $song->album,
                 'input_message_content' => [
                     'message_text' => $messageText,
