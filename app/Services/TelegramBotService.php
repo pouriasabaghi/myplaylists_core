@@ -191,7 +191,7 @@ class TelegramBotService
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "🎧 Song:\n {$song->name} \n {$song->direct_link}",
+            'text' => "🎧 Song:\n {$song->name} \n {$song->share_link}",
             'reply_markup' => Keyboard::make([
                 'inline_keyboard' => [
                     [
@@ -278,7 +278,7 @@ class TelegramBotService
                 $title .= " - Lyrics";
             }
 
-            $messageText .= "\n<a href='{$song->direct_link}'>🟣 Listen In Application</a>";
+            $messageText .= "\n<a href='{$song->share_link}'>🟣 Listen In Application</a>";
 
             $params = [
                 'id' => (string) $song->id,
@@ -291,7 +291,7 @@ class TelegramBotService
                 'reply_markup' => Keyboard::make([
                     'inline_keyboard' => [
                         [
-                            ['text' => '🎧 Listen', 'url' => $song->direct_link],
+                            ['text' => '🎧 Listen', 'url' => $song->share_link],
                             ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
                         ]
                     ]

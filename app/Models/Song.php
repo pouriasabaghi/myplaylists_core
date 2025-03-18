@@ -30,6 +30,13 @@ class Song extends Model
         );
     }
 
+    protected function shareLink(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) => config('app.frontend_url') . "/songs/share/{$attributes['id']}",      
+        );
+    }
+
     public function playlists()
     {
         return $this->belongsToMany(Playlist::class);
