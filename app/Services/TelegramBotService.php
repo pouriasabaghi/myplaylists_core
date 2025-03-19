@@ -27,46 +27,50 @@ class TelegramBotService
         }
     }
 
-    /**
-     * send welcome message 
-     * @param int|null $userId
-     * @return void
-     */
-    public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
-    {
-        $welcomeText = "👋 Hello {$telegramUsername}. \n\n";
-        $welcomeText .= "🟣 Myplaylist is your ultimate music platform, All in one.\n\n";
-
-        $inlineKeyboards = [
-            [
-                [
-                    'text' => 'Search & Share Song 🔍',
-                    'switch_inline_query_current_chat' => 'gary moore'
-                ]
-            ],
-        ];
-        if ($userId) {
-            $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
-            $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
-        } else {
-            $welcomeText .= "Your Telegram account is not registered in the system. However, you can still use all the features of the MyPlaylists bot and application. If you wish to upload a song via the bot, please contact support at t.me/p_nightwolf.";
-            $inlineKeyboards[] = [
-                [
-                    'text' => 'Get Bot Access 🔑',
-                    'url' => config("app.frontend_url") . "/songs/upload",
-                ]
-            ];
-        }
-
+    public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername){
+        
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => $welcomeText,
+            'text' => "👋 Hello {$telegramUsername}. \n\n",
             'reply_markup' => Keyboard::make([
-                'inline_keyboard' => $inlineKeyboards,
+                'keyboard' => [
+                    [
+                        [
+                            'text' => '👤 Support',
+                        ],
+                        [
+                            'text' => '🔑 Access',
+                        ],
+                        [
+                            'text' => '✈️ Tour',
+                        ]
+                    ]
+                ],
+                'resize_keyboard' => true, 
+                'one_time_keyboard' => false, 
             ])
         ]);
 
-
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' =>"Please select your preferred language:",
+            'reply_markup' => Keyboard::make([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => 'فارسی 🇮🇷',
+                            'callback_data' => "setLanguage:$chatId:fa"
+                        ],
+                        [
+                            'text' => 'English 🇺🇸',
+                            'callback_data' => "setLanguage:$chatId:en"
+                        ]
+                    ]
+                ],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => false, 
+            ])
+        ]);
     }
 
     public function commandNotFound($telegram, $chatId)
