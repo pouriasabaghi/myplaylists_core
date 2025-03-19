@@ -35,27 +35,34 @@ class TelegramBotService
     public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
     {
         $welcomeText = "👋 Hello {$telegramUsername}. \n\n";
-        $welcomeText .= "🟣 Myplaylist is a music platform that you can create and share your playlists \n\n";
+        $welcomeText .= "🟣 Myplaylist is your ultimate music platform, All in one.\n\n";
 
+        $inlineKeyboards = [
+            [
+                [
+                    'text' => 'Search & Share Song 🔍',
+                    'switch_inline_query_current_chat' => 'gary moore'
+                ]
+            ],
+        ];
         if ($userId) {
             $welcomeText .= "🔼 Please send me a song file to upload it. \n\n";
             $welcomeText .= "👉 Maximum size due telegram limitation is 20MB.";
         } else {
             $welcomeText .= "Your Telegram account is not registered in the system. However, you can still use all the features of the MyPlaylists bot and application. If you wish to upload a song via the bot, please contact support at t.me/p_nightwolf.";
+            $inlineKeyboards[] = [
+                [
+                    'text' => 'Get Bot Access 🔑',
+                    'url' => config("app.frontend_url") . "/songs/upload",
+                ]
+            ];
         }
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => $welcomeText,
             'reply_markup' => Keyboard::make([
-                'inline_keyboard' => [
-                    [
-                        [
-                            'text' => 'Search & Share Song 🔍',
-                            'switch_inline_query_current_chat' => 'gary moore'
-                        ]
-                    ]
-                ]
+                'inline_keyboard' => $inlineKeyboards,
             ])
         ]);
 
@@ -582,6 +589,46 @@ class TelegramBotService
             "text" => $message,
             "reply_markup" => $replayMarkup
         ]);
+    }
+
+    public function getAccess($telegram, $chatId, $encryptedToken, $telegramUsername)
+    {
+        $token = (new \App\Http\Controllers\api\v1\TokenController())->isTokenValid($encryptedToken);
+        if ($token) {
+            if (empty($telegramUsername)) {
+                $telegram->sendMessage([
+                    "chat_id" => $chatId,
+                    "text" => "🫠 For accessing to bot you should have telegram username. Check tg://settings",
+                    "parse_mode" => "Markdown",
+                ]);
+                return;
+            }
+            $user = \App\Models\User::firstWhere("email", $token['email']);
+
+            if ($user->telegram_username && $user->telegram_username === $telegramUsername) {
+                $telegram->sendMessage([
+                    "chat_id" => $chatId,
+                    "text" => "🤔 It seems you already have access to bot, But we updated your access.",
+                ]);
+            }
+
+            $user->update([
+                "telegram_username" => $telegramUsername,
+            ]);
+
+            $telegram->sendMessage([
+                "chat_id" => $chatId,
+                "text" => "🟣 Now you have access to upload your songs to MyPlaylists. \n\n🔼 Please send me a song file to upload it. \n\n👉 Maximum size due telegram limitation is 20MB.",
+                "parse_mode" => "Markdown",
+            ]);
+
+        } else {
+            $telegram->sendMessage([
+                "chat_id" => $chatId,
+                "text" => "Your token is invalid, If you think this is but please contact support at t.me/p_nightwolf",
+            ]);
+        }
+
     }
 
 }

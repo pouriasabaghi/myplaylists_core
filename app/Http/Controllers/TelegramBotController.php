@@ -36,12 +36,6 @@ class TelegramBotController extends Controller
     public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
-            TelegramUser::updateOrCreate(
-                ['chat_id' => $this->chatId],
-                ['username' => $this->account->username]
-            );
-            
-            
             // It's url 
             if (str_starts_with($this->message->getText(), 'https://')) {
                 // supported sites
@@ -103,8 +97,15 @@ class TelegramBotController extends Controller
             }
 
             // check for payload and return "/start " has space after start
-            if (str_starts_with($this->message->getText(), '/start ') || str_starts_with($this->message->getText(), '/dl_')) {
+            if (str_starts_with($this->message->getText(), '/start ')) {
                 $this->handlePayload($this->chatId, $this->message->getText());
+                return;
+            }
+
+            // /dl_ command means user want to download a song
+            if (str_starts_with($this->message->getText(), '/dl_')) {
+                [$_, $songId] = explode('_', $this->message->getText());
+                $this->sendSongToTelegram($this->chatId, $songId);
                 return;
             }
 
@@ -114,8 +115,14 @@ class TelegramBotController extends Controller
                     ['chat_id' => $this->chatId],
                     ['username' => $this->account->username]
                 );
-                
+
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
+                return;
+            }
+
+            if (str_starts_with($this->message->getText(), 'getAccess#')) {
+                [$_, $token] = explode('#', $this->message->getText());
+                $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account->username);
                 return;
             }
 
@@ -145,11 +152,14 @@ class TelegramBotController extends Controller
             return;
 
         } catch (\Throwable $th) {
-            $this->telegram->sendMessage([
-                'chat_id' => $this->chatId,
-                //'text' => "Some thing went wrong. If you think this is a bug contact support please.",
-                'text' => $th->getMessage() . " - " . $th->getLine(),
-            ]);
+            \Log::error($th->getMessage());
+            if ($this->chatId) {
+                $this->telegram->sendMessage([
+                    'chat_id' => $this->chatId,
+                    'text' => "Some thing went wrong. If you think this is a bug contact support please.",
+                    //'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
+                ]);
+            }
             return;
         }
     }
@@ -183,17 +193,25 @@ class TelegramBotController extends Controller
         (new TelegramBotService())->addToPlaylistHandler($this->telegram, $this->chatId, $user, $playlistId, $songId);
     }
 
-    public function sendSongToTelegram($songId)
-    {
-        $this->telegram->sendMessage([
-            'chat_id' => $this->chatId,
-            'text' => "Song id is: $songId",
-        ]);
-    }
-
     public function handlePayload($chatId, string $payload)
     {
-        [$command, $songId] = explode('_', $payload);
+        // remove /"start " from payload
+        if (str_starts_with($payload, "/start "))
+            $payload = str_replace("/start ", "", $payload);
+
+        $payload = explode('_', $payload);
+
+        // get action
+        $action = $payload[0];
+
+        // replace chat_id with action
+        $payload[0] = $chatId;
+
+        call_user_func([$this, $action], ...$payload);
+    }
+
+    public function sendSongToTelegram($chatId, $songId)
+    {
 
         $song = Song::firstWhere('id', $songId);
 
@@ -202,7 +220,7 @@ class TelegramBotController extends Controller
         $caption = "<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
 
         if ($song->lyrics) {
-            $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8')."...";
+            $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8') . "...";
             $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
         }
 
@@ -242,5 +260,17 @@ class TelegramBotController extends Controller
         }
 
         return;
+    }
+
+    // ask access payload
+    public function askAccess($chatId)
+    {
+        $message = "🔑 Your access key has been copied to your clipboard.Please send it to me.\n⚠️ This token expire after 60 second, If your toked expired generate new one.\n\n";
+        $message .= "🔑 کلید دسترسی شما در کلیپ بورد شما ذخیره شده  است. لطفا برای من ارسال کنید.\n⚠️ این توکن تنها ۶۰ ثانیه اعتبار دارد، در صورت منقضی شدن مجدد توکن دریافت کنید.";
+
+        $this->telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => $message,
+        ]);
     }
 }

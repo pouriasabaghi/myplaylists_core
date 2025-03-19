@@ -1,11 +1,16 @@
 <?php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\api\v1\TokenController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/token', [TokenController::class, 'create'])->middleware('auth:sanctum');
+Route::post('/token', function(){
+    (new TokenController())->isTokenValid(request()->token);
+})->middleware('auth:sanctum');
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show'])->middleware('auth:sanctum');
 Route::get('/songs/top-songs', [\App\Http\Controllers\api\v1\SongController::class, 'getTopSongs'])->middleware('auth:sanctum');
