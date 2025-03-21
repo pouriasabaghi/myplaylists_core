@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Song;
 use App\Models\User;
 use App\Models\TelegramUser;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
-use Telegram\Bot\FileUpload\InputFile;
+use App\Services\TelegramBotCallbackQueryService;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use App\Interfaces\AiInterface;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -34,7 +33,7 @@ class TelegramBotController extends Controller
         $this->chatId = $this->message->isNotEmpty() ? $this->message?->getChat()?->getId() : null; // prevent error in inline queries
     }
 
-    public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
+    public function handle(TelegramBotService $telegramBotService,TelegramBotCallbackQueryService $telegramBotCallbackQueryService, SongService $songService, AiInterface $aiService)
     {
         try {
             // user sended message value
@@ -55,7 +54,7 @@ class TelegramBotController extends Controller
                 $callbackQuery = $this->update->getCallbackQuery();
                 $callbackData = $callbackQuery->getData();
 
-                $this->callbackQueryHandler($telegramBotService, $callbackQuery, $callbackData);
+                $this->callbackQueryHandler($telegramBotCallbackQueryService, $callbackQuery, $callbackData);
                 $this->telegram->answerCallbackQuery([
                     'callback_query_id' => $callbackQuery->id,
                 ]);
@@ -67,7 +66,7 @@ class TelegramBotController extends Controller
                 $inlineQuery = $this->update->getInlineQuery();
                 $queryText = $inlineQuery->get('query');
 
-                $telegramBotService->searchSongsInlineQuery($inlineQuery, $queryText, $this->chatId);
+                $telegramBotService->searchSongsInlineQuery($inlineQuery, $queryText);
                 return;
             }
 
@@ -166,7 +165,7 @@ class TelegramBotController extends Controller
         }
     }
 
-    public function callbackQueryHandler(TelegramBotService $telegramBotService, $callbackQuery, string $command)
+    public function callbackQueryHandler(TelegramBotCallbackQueryService $telegramBotCallbackQueryService, $callbackQuery, string $command)
     {
         $command = explode(':', $command);
 
@@ -182,7 +181,7 @@ class TelegramBotController extends Controller
             ...$command,
         ];
 
-        call_user_func([$telegramBotService, $commandName], ...$commandData);
+        call_user_func([$telegramBotCallbackQueryService, $commandName], ...$commandData);
     }
 
     public function payloadHandler(TelegramBotService $telegramBotService, string $payload)
