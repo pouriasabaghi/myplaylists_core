@@ -7,18 +7,20 @@ use App\Models\TelegramUser;
 use App\Services\SongService;
 use App\Services\TelegramBotService;
 use App\Services\TelegramBotCallbackQueryService;
+use App\Services\TelegramBotPayloadService;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use App\Interfaces\AiInterface;
 use Telegram\Bot\Keyboard\Keyboard;
+use App\Traits\TelegramBotTrait;
 
 class TelegramBotController extends Controller
 {
+    use TelegramBotTrait;
     public $telegram;
     public $message;
     public $account;
     public $chatId;
     public $update;
-    public $user;
 
     public function __construct()
     {
@@ -33,7 +35,7 @@ class TelegramBotController extends Controller
         $this->chatId = $this->message->isNotEmpty() ? $this->message?->getChat()?->getId() : null; // prevent error in inline queries
     }
 
-    public function handle(TelegramBotService $telegramBotService,TelegramBotCallbackQueryService $telegramBotCallbackQueryService, SongService $songService, AiInterface $aiService)
+    public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
             // user sended message value
@@ -54,7 +56,7 @@ class TelegramBotController extends Controller
                 $callbackQuery = $this->update->getCallbackQuery();
                 $callbackData = $callbackQuery->getData();
 
-                $this->callbackQueryHandler($telegramBotCallbackQueryService, $callbackQuery, $callbackData);
+                $this->callbackQueryHandler(new TelegramBotCallbackQueryService(), $callbackQuery, $callbackData);
                 $this->telegram->answerCallbackQuery([
                     'callback_query_id' => $callbackQuery->id,
                 ]);
@@ -72,7 +74,7 @@ class TelegramBotController extends Controller
 
             // check for payload and return "/start " has space after start
             if (str_starts_with($this->message->getText(), '/start ')) {
-                $this->payloadHandler($telegramBotService, $messageValue);
+                $this->payloadHandler(new TelegramBotPayloadService(), $messageValue);
                 return;
             }
 
@@ -95,35 +97,9 @@ class TelegramBotController extends Controller
                 return;
             }
 
-            if (in_array($this->message->getText(), ['👤 Support', '🔑 Access', "✈️ Tour"])) {
-                if ($this->message->getText() === '👤 Support') {
-                    $this->telegram->sendMessage([
-                        "chat_id" => $this->chatId,
-                        "text" => "👤 Support: @p_nightwolf"
-                    ]);
-                }
-
-                if ($this->message->getText() === '🔑 Access') {
-                    $this->telegram->sendMessage([
-                        "chat_id" => $this->chatId,
-                        "text" => __("message.need_access", [], $language),
-                        "reply_markup" => Keyboard::make([
-                            'inline_keyboard' => [
-                                [
-                                    [
-                                        'text' => __("message.token_button", [], $language),
-                                        'url' => config("app.frontend_url") . "/songs/upload",
-                                    ]
-                                ]
-                            ]
-                        ]),
-                    ]);
-                }
-
-                if ($this->message->getText() === "✈️ Tour") {
-                    $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
-                }
-
+            // handle keyboard messages
+            if ($this->isKeyboardMessage($messageValue)) {
+                $this->keyboardHandler($messageValue, $user, $language, $telegramBotService);
                 return;
             }
 
@@ -184,7 +160,7 @@ class TelegramBotController extends Controller
         call_user_func([$telegramBotCallbackQueryService, $commandName], ...$commandData);
     }
 
-    public function payloadHandler(TelegramBotService $telegramBotService, string $payload)
+    public function payloadHandler(TelegramBotPayloadService $telegramBotPayloadService, string $payload)
     {
         // remove /"start " from payload
         if (str_starts_with($payload, "/start "))
@@ -205,12 +181,55 @@ class TelegramBotController extends Controller
             ...$payload,
         ];
 
-        call_user_func([$telegramBotService, $action], ...$payloadData);
+        call_user_func([$telegramBotPayloadService, $action], ...$payloadData);
     }
 
-    public function getUser($telegramUsername)
+    public function isKeyboardMessage($messageValue)
     {
-        return User::firstWhere('telegram_username', $telegramUsername);
+        $buttons = [
+            '👤 Support',
+            '🔑 Access',
+            '✈️ Tour',
+        ];
+
+        return !isset($buttons[$messageValue]);
     }
 
+    public function keyboardHandler($userEnteredKeyboardButton, $user, $language, TelegramBotService $telegramBotService)
+    {
+        $buttons = [
+            '👤 Support' => [
+                "text" => "👤 Support: @p_nightwolf",
+            ],
+            '🔑 Access' => [
+                "text" => __("message.need_access", [], $language),
+                "reply_markup" => Keyboard::make([
+                    'inline_keyboard' => [
+                        [
+                            [
+                                'text' => __("message.token_button", [], $language),
+                                'url' => config("app.frontend_url") . "/songs/upload",
+                            ]
+                        ]
+                    ]
+                ]),
+            ],
+            '✈️ Tour' => function () use ($telegramBotService, $user) {
+                $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
+            }
+        ];
+        if (isset($buttons[$userEnteredKeyboardButton])) {
+            if (is_callable($buttons[$userEnteredKeyboardButton])) {
+                // call if it's callable
+                $buttons[$userEnteredKeyboardButton]();
+            } else {
+                // send message
+                $this->telegram->sendMessage(array_merge(["chat_id" => $this->chatId], $buttons[$userEnteredKeyboardButton]));
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 }

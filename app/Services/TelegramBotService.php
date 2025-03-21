@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Objects\InlineQuery\InlineQueryResultArticle;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Telegram\Bot\FileUpload\InputFile;
 use App\Models\User;
 use App\Models\TelegramUser;
+use Telegram\Bot\FileUpload\InputFile;
+use App\Traits\TelegramBotTrait;
 
 class TelegramBotService
 {
+    use TelegramBotTrait;
     public static function getFileUrl(File $file): JsonResponse|string
     {
         try {
@@ -328,7 +330,7 @@ class TelegramBotService
                 ]);
                 return;
             }
-            $user = \App\Models\User::firstWhere("email", $token['email']);
+            $user = User::firstWhere("email", $token['email']);
 
             if ($user->telegram_username && $user->telegram_username === $telegramUsername) {
                 $telegram->sendMessage([
@@ -396,20 +398,28 @@ class TelegramBotService
         ]);
     }
 
-    public function getUser($telegramUsername)
+    public function playlistsInlineKeyboard($user, $buttonsPerRow = 2, $additionalData = null)
     {
-        return User::firstWhere('telegram_username', $telegramUsername);
+        $playlists = $user->playlists;
+        $buttons = [];
+
+        foreach ($playlists as $playlist) {
+            $callbackData = "addToPlaylist:{$user->telegram_username}:{$playlist->id}";
+
+            if ($additionalData)
+                $callbackData .= ":$additionalData";
+
+            $buttons[] = [
+                'text' => $playlist->name,
+                'callback_data' => $callbackData,
+            ];
+        }
+
+        // buttons per row 
+        return array_chunk($buttons, $buttonsPerRow);
     }
 
-    /**
-     * Payloads
-     * contains "_"
-     */
-    // Payload: download from outer resources
-
-
-    // Payload: send song to telegram
-    public function sendSongToTelegram($telegram, $chatId, $songId)
+    public function sendSongToTelegram($telegram,  $chatId,  $songId)
     {
         $song = Song::firstWhere('id', $songId);
 
@@ -436,37 +446,185 @@ class TelegramBotService
         $telegram->sendAudio($params);
     }
 
-    // Payload: ask access payload
-    public function askAccess($telegram, $chatId)
+    public function getSongFromEnteredResourceUrl($telegram, $chatId, $message)
     {
-        $message = "🔑 Your access key has been copied to your clipboard.Please send it to me.\n⚠️ This token expire after 60 second, If your toked expired generate new one.\n\n";
-        $message .= "🔑 کلید دسترسی شما در کلیپ بورد شما ذخیره شده  است. لطفا برای من ارسال کنید.\n⚠️ این توکن تنها ۶۰ ثانیه اعتبار دارد، در صورت منقضی شدن مجدد توکن دریافت کنید.";
+        // supported sites
+        $allowedSites = [
+            'https://soundcloud.com/' => 'soundcloud',
+            'https://m.soundcloud.com/' => 'soundcloud',
+            'https://on.soundcloud.com/' => 'soundcloud',
+            'https://music.youtube.com/' => 'youtubemusic',
+            'https://youtu.be/' => 'youtubemusic',
+            'https://www.youtube.com/' => 'youtubemusic',
+        ];
 
-        $telegram->sendMessage([
-            "chat_id" => $chatId,
-            "text" => $message,
-        ]);
-    }
-    
-    public function playlistsInlineKeyboard($user, $buttonsPerRow = 2, $additionalData = null)
-    {
-        $playlists = $user->playlists;
-        $buttons = [];
+        // check for supported sites
+        foreach ($allowedSites as $site => $platform) {
+            if (str_starts_with($message, $site)) {
+                if ($platform === 'youtubemusic') {
+                    $this->getFromYoutubeMusic($telegram, $chatId, $message);
+                    return;
+                }
 
-        foreach ($playlists as $playlist) {
-            $callbackData = "addToPlaylist:{$user->telegram_username}:{$playlist->id}";
-
-            if ($additionalData)
-                $callbackData .= ":$additionalData";
-
-            $buttons[] = [
-                'text' => $playlist->name,
-                'callback_data' => $callbackData,
-            ];
+                // Download from sound cloud
+                if ($platform === 'soundcloud') {
+                    $this->getFromSoundCloud($telegram, $chatId, $message);
+                    return;
+                }
+            }
         }
 
-        // buttons per row 
-        return array_chunk($buttons, $buttonsPerRow);
+        // no supported site found
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Entered url is not valid.\nCurrently we support SoundCloud and YoutubeMusic.",
+        ]);
     }
+
+    public function getFromSoundCloud($telegram, $chatId, $userEnteredUrl, $isUrl = true)
+    {
+        $dlFromScMessage = $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "📥 Downloading From SoundCloud Server...",
+        ]);
+
+        if (str_starts_with($userEnteredUrl, 'https://on.soundcloud.com'))
+            $userEnteredUrl = $this->expandUrl($userEnteredUrl);
+
+        // prevent from sending shell
+        $url = escapeshellarg($userEnteredUrl);
+
+        // run scdl script and get output
+        $command = $isUrl ? "/usr/local/bin/scdl -l $url --overwrite  2>&1" : "/usr/local/bin/scdl -s $url -n 1  2>&1";
+
+        // out put of scdl command contains
+        $output = shell_exec($command);
+
+
+        preg_match('/(.+?)\.(mp3|m4a|flac|opus)/', $output, $matches);
+
+        // alert user to prevent sending artist, album or other pages link
+        if (empty($matches[0])) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "⚠️ Invalid url \nPlease make sure it's a song page not artist or album \nIf you thing this is a bug please contact t.me/p_nightwolf",
+            ]);
+            return;
+        }
+
+        $filenameWithExtension = trim($matches[0]) ?? null;
+        // $filename = $matches[1];
+        // $fileExtension = $matches[2];
+
+
+        $downloadedFile = "/var/www/downloads/$filenameWithExtension";
+
+        $telegram->deleteMessage([
+            'chat_id' => $chatId,
+            'message_id' => $dlFromScMessage->getMessageId(),
+        ]);
+
+
+        if ($filenameWithExtension && file_exists($downloadedFile)) {
+            $params = [
+                'chat_id' => $chatId,
+                'audio' => InputFile::create($downloadedFile),
+                'caption' => "[🟣 Myplaylists](https://t.me/myplaylists_ir)",
+                'parse_mode' => 'Markdown'
+            ];
+            $telegram->sendAudio($params);
+
+            // delete the file after sending
+            unlink($downloadedFile);
+
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Invalid url \n If you thing this is a but please contact t.me/p_nightwolf"
+            ]);
+        }
+    }
+
+    public function getFromYouTubeMusic($telegram, $chatId, $userEnteredUrl)
+    {
+        // inform user that playlists not allowed
+        if (strpos($userEnteredUrl, 'list=') !== false) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "⚠️ It seems to be a playlist URL\.\n Sorry but downloading playlists is not allowed ||Yet 🔥||\.",
+                'parse_mode' => 'MarkdownV2'
+            ]);
+            return;
+        }
+
+        // inform user that connecting is starting
+        $cnToYmMessage = $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "⏳ Connecting to YouTube server...",
+        ]);
+
+        if (str_starts_with($userEnteredUrl, 'https://youtu.be'))
+            $userEnteredUrl = $this->expandUrl($userEnteredUrl);
+
+        // escape URL to prevent shell injection
+        $url = escapeshellarg($userEnteredUrl);
+        $downloadPath = "/var/www/downloads/";
+
+        // Step 1: Get the expected filename using --get-filename
+        $getFilenameCmd = "/usr/local/bin/yt-dlp --get-filename --audio-format mp3 --embed-metadata  --output '{$downloadPath}%(title)s.mp3' $url";
+        $downloadedFile = trim(shell_exec($getFilenameCmd));
+
+
+        // Inform user that downloading song started
+        $dlFromYmMessage = $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "📥 Downloading " . basename($downloadedFile) . " From Youtube server....",
+        ]);
+
+        // Step 2: Download the audio file using yt-dlp
+        $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --embed-thumbnail --embed-metadata --output '{$downloadPath}%(title)s.%(ext)s' $url 2>&1";
+        shell_exec($downloadCommand);
+
+        // inform user that sending song started
+        $almostDoneMessage = $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "⬆️ Almost done, Sending for you...",
+        ]);
+
+        // clean up messages
+        $telegram->deleteMessage([
+            'chat_id' => $chatId,
+            'message_id' => $cnToYmMessage->getMessageId(),
+        ]);
+        $telegram->deleteMessage([
+            'chat_id' => $chatId,
+            'message_id' => $dlFromYmMessage->getMessageId(),
+        ]);
+        $telegram->deleteMessage([
+            'chat_id' => $chatId,
+            'message_id' => $almostDoneMessage->getMessageId(),
+        ]);
+
+        // check if file exists, then send and remove it
+        if (file_exists($downloadedFile)) {
+            $params = [
+                'chat_id' => $chatId,
+                'audio' => InputFile::create($downloadedFile),
+                'thumb' => InputFile::create("https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png"),
+                'caption' => "[🟣 Myplaylists](https://t.me/myplaylists_ir)",
+                'parse_mode' => 'Markdown'
+            ];
+            $telegram->sendAudio($params);
+
+            // delete the file after sending
+            unlink($downloadedFile);
+        } else {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact t.me/p_nightwolf",
+            ]);
+        }
+    }
+
 
 }
