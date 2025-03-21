@@ -193,7 +193,7 @@ class TelegramBotController extends Controller
             '✈️ Tour',
         ];
 
-        return !isset($buttons[$messageValue]);
+        return isset($buttons[$messageValue]);
     }
 
     public function keyboardHandler($userEnteredKeyboardButton, $user, $language, TelegramBotService $telegramBotService)
