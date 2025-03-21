@@ -11,6 +11,8 @@ use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Objects\InlineQuery\InlineQueryResultArticle;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\FileUpload\InputFile;
+use App\Models\User;
+use App\Models\TelegramUser;
 
 class TelegramBotService
 {
@@ -27,8 +29,13 @@ class TelegramBotService
         }
     }
 
-    public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername){
-        
+    public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
+    {
+        TelegramUser::updateOrCreate(
+            ['chat_id' => $chatId],
+            ['username' => $telegramUsername]
+        );
+
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => "👋 Hello {$telegramUsername}. \n\n",
@@ -46,29 +53,29 @@ class TelegramBotService
                         ]
                     ]
                 ],
-                'resize_keyboard' => true, 
-                'one_time_keyboard' => false, 
+                'resize_keyboard' => true,
+                'one_time_keyboard' => false,
             ])
         ]);
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' =>"Please select your preferred language:",
+            'text' => "Please select your preferred language:",
             'reply_markup' => Keyboard::make([
                 'inline_keyboard' => [
                     [
                         [
                             'text' => 'فارسی 🇮🇷',
-                            'callback_data' => "setLanguage:$chatId:fa"
+                            'callback_data' => "setLanguage:fa"
                         ],
                         [
                             'text' => 'English 🇺🇸',
-                            'callback_data' => "setLanguage:$chatId:en"
+                            'callback_data' => "setLanguage:en"
                         ]
                     ]
                 ],
                 'resize_keyboard' => true,
-                'one_time_keyboard' => false, 
+                'one_time_keyboard' => false,
             ])
         ]);
     }
@@ -268,15 +275,57 @@ class TelegramBotService
         ]);
     }
 
-    public function searchSongsInlineQuery($inlineQuery, $queryText, $chatId)
+    public function searchSongsInlineQuery($inlineQuery, $userEnteredText)
     {
-        $songs = Song::where('name', 'LIKE', "%$queryText%")
-            ->orWhere('artist', 'LIKE', "%$queryText%")
+        if (empty(trim($userEnteredText))) {
+            Telegram::answerInlineQuery([
+                'inline_query_id' => $inlineQuery->get('id'),
+                'results' => json_encode([
+                    new InlineQueryResultArticle([
+                        'id' => uniqid(),
+                        'title' => "نام خواننده یا آهنگ رو برام بنویس... 🙂",
+                        'input_message_content' => [
+                            'message_text' => "🟣 [MyPlaylists](t.me/Myplaylists_ir_Bot)",
+                            'parse_mode' => 'markdown',
+                        ],
+                        'thumbnail_url' => 'https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png',
+                    ])
+                ]),
+                'cache_time' => 0,
+            ]);
+
+            return;
+        }
+
+        $songs = Song::where('name', 'LIKE', "%$userEnteredText%")
+            ->orWhere('artist', 'LIKE', "%$userEnteredText%")
             ->limit(10)
             ->get();
 
-        $results = [];
+        // no result founded
+        if ($songs->isEmpty()) {
+            Telegram::answerInlineQuery([
+                'inline_query_id' => $inlineQuery->get('id'),
+                'results' => json_encode([
+                    new InlineQueryResultArticle([
+                        'id' => uniqid(),
+                        'title' => "چیزی پیدا نکردم 🫠",
+                        'description' => "خواننده یا آهنگ دیگه ای رو امتحان کن 😃",
+                        'input_message_content' => [
+                            'message_text' => "🟣 [MyPlaylists](t.me/Myplaylists_ir_Bot)",
+                            'parse_mode' => 'markdown',
+                        ],
+                        'thumbnail_url' => 'https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png',
+                    ])
+                ]),
+                'cache_time' => 0,
+            ]);
 
+            return;
+        }
+
+        
+        $results = [];
         foreach ($songs as $song) {
             $album = $song->album ?? 'unknwon';
             $artist = $song->artist ?? 'unknown';
@@ -533,7 +582,7 @@ class TelegramBotService
             $inlineKeyboard[] = [
                 [
                     'text' => $song[0], // song title
-                    'callback_data' => "dlOut:{$chatId}:{$song[1]}:youtubemusic", // song id
+                    'callback_data' => "dlOut:{$song[1]}:youtubemusic", // song id
                 ]
             ];
         }
@@ -565,7 +614,7 @@ class TelegramBotService
                 [
                     [
                         'text' => '🔎 Search The Internet',
-                        'callback_data' => "sOut:{$chatId}:{$userEnteredText}:youtubemusic"
+                        'callback_data' => "sOut:{$userEnteredText}:youtubemusic"
                     ],
                 ],
             ],
@@ -635,4 +684,244 @@ class TelegramBotService
 
     }
 
+    /**
+     * Summary of getSongFromEnteredResourceUrl
+     * @param mixed $telegram
+     * @param mixed $chatId
+     * @param mixed $message
+     * @return void
+     */
+    public function getSongFromEnteredResourceUrl($telegram, $chatId, $message)
+    {
+        // supported sites
+        $allowedSites = [
+            'https://soundcloud.com/' => 'soundcloud',
+            'https://m.soundcloud.com/' => 'soundcloud',
+            'https://on.soundcloud.com/' => 'soundcloud',
+            'https://music.youtube.com/' => 'youtubemusic',
+            'https://youtu.be/' => 'youtubemusic',
+            'https://www.youtube.com/' => 'youtubemusic',
+        ];
+
+        // check for supported sites
+        foreach ($allowedSites as $site => $platform) {
+            if (str_starts_with($message, $site)) {
+                if ($platform === 'youtubemusic') {
+                    $this->getFromYoutubeMusic($telegram, $chatId, $message);
+                    return;
+                }
+
+                // Download from sound cloud
+                if ($platform === 'soundcloud') {
+                    $this->getFromSoundCloud($telegram, $chatId, $message);
+                    return;
+                }
+            }
+        }
+
+        // no supported site found
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => "Entered url is not valid.\nCurrently we support SoundCloud and YoutubeMusic.",
+        ]);
+    }
+
+    public function getUser($telegramUsername)
+    {
+        return User::firstWhere('telegram_username', $telegramUsername);
+    }
+
+
+    /**
+     * Commands
+     * contains ":"
+     */
+
+    // Command
+    public function showPlaylists($telegram, $chatId, $callbackQuery, $telegramUsername, $songId)
+    {
+        $user = $this->getUser($telegramUsername);
+        $this->showPlaylistsHandler($telegram, $chatId, $user, $songId);
+    }
+
+    // Command
+    public function addToPlaylist($telegram, $chatId, $callbackQuery, $telegramUsername, $playlistId, $songId)
+    {
+        $user = $this->getUser($telegramUsername);
+        $this->addToPlaylistHandler($telegram, $chatId, $user, $playlistId, $songId);
+    }
+
+    // Command: search from outer resources
+    public function sOut($telegram, $chatId, $callbackQuery, $identifier, $resource)
+    {
+        if ($resource == 'youtubemusic') {
+            $this->searchForSongFromYoutubeMusic($telegram, $chatId, $identifier);
+            return;
+        }
+
+        return;
+    }
+
+    // Command: set language
+    public function setLanguage($telegram, $chatId, $callbackQuery, $language)
+    {
+        TelegramUser::firstWhere('chat_id', $chatId)->update([
+            'language' => $language
+        ]);
+
+        $message = $telegram->sendMessage([
+            "chat_id" => $chatId,
+            'text' => "Preparing tour...",
+        ]);
+
+        $messageId = $message->getMessageId();
+
+        $telegram->editMessageText([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => __("tour.introduction", [], $language),
+            'reply_markup' => Keyboard::make([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => __('tour.start_button', [], $language),
+                            'callback_data' => "stepHandler:$messageId:0:$language"
+                        ],
+                    ]
+                ],
+            ])
+        ]);
+    }
+
+    // Command: handle tour steps
+    public function stepHandler($telegram, $chatId, $callbackQuery, $messageId, $step, $language)
+    {
+        $nextStep = $step + 1;
+        $prevStep = $step - 1;
+
+        $inlineKeyboards = [
+            []
+        ];
+
+        // Remove prev step button if it's start
+        if ($step > 0) {
+            $inlineKeyboards[0][] = [
+                'text' => '⬅️',
+                'callback_data' => "stepHandler:$messageId:$prevStep:$language"
+            ];
+        }
+
+        // add next step button
+        $inlineKeyboards[0][] = [
+            'text' => '➡️',
+            'callback_data' => "stepHandler:$messageId:$nextStep:$language"
+        ];
+
+        // add try out button for instance share button
+        if ($step == 6) {
+            $inlineKeyboards[] = [
+                [
+                    'text' => __('tour.try_out_button', [], $language),
+                    'switch_inline_query_current_chat' => 'back in black'
+                ]
+            ];
+        }
+
+
+        // empty inline keyboard
+        if ($step == 10) {
+            $inlineKeyboards = [
+                [
+                    [
+                        'text' => __('tour.end_button', [], $language),
+                        'callback_data' => "sendRulesAndLimitations:$messageId:$language"
+                    ]
+                ]
+            ];
+        }
+
+        // send to telegram server
+        $telegram->editMessageText([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => __("tour.steps.$step", [], $language),
+            'reply_markup' => Keyboard::make([
+                'inline_keyboard' => $inlineKeyboards
+            ])
+        ]);
+
+    }
+
+    // Command: send rules    
+    public function sendRulesAndLimitations($telegram, $chatId, $callbackQuery, $messageId, $language)
+    {
+        $telegram->deleteMessage([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+        ]);
+
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => __("tour.rules_and_limitations", [], $language),
+        ]);
+    }
+
+    // Command: download form outer resource
+    public function dlOut($telegram, $chatId, $callbackQuery, $identifier, $resource)
+    {
+
+        if ($resource == 'youtubemusic') {
+            $this->getFromYoutubeMusic($telegram, $chatId, "https://www.youtube.com/watch?v=$identifier");
+            return;
+        }
+
+        return;
+    }
+
+    /**
+     * Payloads
+     * contains "_"
+     */
+    // Payload: download from outer resources
+
+
+    // Payload: send song to telegram
+    public function sendSongToTelegram($telegram, $chatId, $songId)
+    {
+        $song = Song::firstWhere('id', $songId);
+
+        $songUrl = config('app.app_url') . "/storage/{$song->path}";
+
+        $caption = "<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+
+        if ($song->lyrics) {
+            $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8') . "...";
+            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+        }
+
+        $params = [
+            'chat_id' => $chatId,
+            'audio' => InputFile::create($songUrl),
+            'caption' => $caption,
+            'parse_mode' => 'HTML'
+        ];
+
+        $params['title'] = $song->name;
+        $params['performer'] = $song->artist;
+        $params['thumb'] = InputFile::create($song->cover);
+
+        $telegram->sendAudio($params);
+    }
+
+    // Payload: ask access payload
+    public function askAccess($telegram, $chatId)
+    {
+        $message = "🔑 Your access key has been copied to your clipboard.Please send it to me.\n⚠️ This token expire after 60 second, If your toked expired generate new one.\n\n";
+        $message .= "🔑 کلید دسترسی شما در کلیپ بورد شما ذخیره شده  است. لطفا برای من ارسال کنید.\n⚠️ این توکن تنها ۶۰ ثانیه اعتبار دارد، در صورت منقضی شدن مجدد توکن دریافت کنید.";
+
+        $telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => $message,
+        ]);
+    }
 }
