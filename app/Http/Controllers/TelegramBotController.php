@@ -91,6 +91,7 @@ class TelegramBotController extends Controller
                 return;
             }
 
+            // get access | this is static command
             if (str_starts_with($this->message->getText(), 'getAccess#')) {
                 [$_, $token] = explode('#', $this->message->getText());
                 $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account->username);

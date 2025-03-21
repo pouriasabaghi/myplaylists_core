@@ -625,6 +625,4 @@ class TelegramBotService
             ]);
         }
     }
-
-
 }
