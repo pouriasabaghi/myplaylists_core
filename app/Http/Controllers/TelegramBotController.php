@@ -220,12 +220,12 @@ class TelegramBotController extends Controller
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
             },
             '📲 Login' => [
-                'text' => 'Click on the button below',
+                'text' =>__("message.telegram_login", [], $language),
                 "reply_markup" => Keyboard::make([
                     'inline_keyboard' => [
                         [
                             [
-                                'text' => 'Login',
+                                'text' => __("message.login_button", [], $language),
                                 'login_url' => [
                                     'url' => config("app.app_url") . "/telegram-auth",
                                 ],

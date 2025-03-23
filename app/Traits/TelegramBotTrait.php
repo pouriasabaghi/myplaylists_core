@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Models\TelegramUser;
+
 trait TelegramBotTrait
 {
     public function getUser($telegramId)
@@ -29,5 +31,9 @@ trait TelegramBotTrait
         }
 
         return $shortUrl;
+    }
+
+    public function getChat($chatId){
+       return  TelegramUser::firstWhere('chat_id', $chatId);
     }
 }

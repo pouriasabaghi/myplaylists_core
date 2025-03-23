@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Song;
-use Telegram\Bot\FileUpload\InputFile;
+use App\Models\TelegramUser;
 use Telegram\Bot\Api as TelegramBotApi;
+use Telegram\Bot\Keyboard\Keyboard;
+use App\Traits\TelegramBotTrait;
 
 /**
  * Payloads
@@ -12,6 +13,7 @@ use Telegram\Bot\Api as TelegramBotApi;
  */
 class TelegramBotPayloadService
 {
+    use TelegramBotTrait;
 
     /**
      * Payload: send song to telegram
@@ -33,12 +35,33 @@ class TelegramBotPayloadService
      */
     public function askAccess(TelegramBotApi $telegram, int $chatId)
     {
-        $message = "🔑 Your access key has been copied to your clipboard.Please send it to me.\n⚠️ This token expire after 60 second, If your toked expired generate new one.\n\n";
-        $message .= "🔑 کلید دسترسی شما در کلیپ بورد شما ذخیره شده  است. لطفا برای من ارسال کنید.\n⚠️ این توکن تنها ۶۰ ثانیه اعتبار دارد، در صورت منقضی شدن مجدد توکن دریافت کنید.";
+        $language = $this->getChat($chatId)?->language;
 
         $telegram->sendMessage([
             "chat_id" => $chatId,
-            "text" => $message,
+            "text" => __("message.access_alert", [], $language),
+        ]);
+    }
+
+
+    public function login(TelegramBotApi $telegram, int $chatId)
+    {
+        $language = $this->getChat($chatId)?->language;
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => __('message.telegram_login', [], $language),
+            "reply_markup" => Keyboard::make([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => 'Login',
+                            'login_url' => [
+                                'url' => config("app.app_url") . "/telegram-auth",
+                            ],
+                        ]
+                    ]
+                ]
+            ]),
         ]);
     }
 }

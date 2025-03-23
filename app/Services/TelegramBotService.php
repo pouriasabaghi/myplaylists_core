@@ -327,17 +327,11 @@ class TelegramBotService
     public function getAccess($telegram, $chatId, $encryptedToken, $account)
     {
         $token = (new \App\Http\Controllers\api\v1\TokenController())->isTokenValid($encryptedToken);
+        $language = $this->getChat($chatId)?->language;
+        
         if ($token) {
 
             $user = User::firstWhere("email", $token['email']);
-
-            if ($user->telegram_username && $user->telegram_username === $account->username) {
-                $telegram->sendMessage([
-                    "chat_id" => $chatId,
-                    "text" => "🤔 It seems you already have access to bot, But we updated your access.",
-                ]);
-            }
-
             $user->update([
                 "telegram_id" => $account->getId(),
                 "telegram_username" => $account->username,
@@ -345,14 +339,14 @@ class TelegramBotService
 
             $telegram->sendMessage([
                 "chat_id" => $chatId,
-                "text" => "🟣 Now you have access to upload your songs to MyPlaylists. \n\n🔼 Please send me a song file to upload it. \n\n👉 Maximum size due telegram limitation is 20MB.",
+                "text" => __("message.access_granted", [], $language),
                 "parse_mode" => "Markdown",
             ]);
 
         } else {
             $telegram->sendMessage([
                 "chat_id" => $chatId,
-                "text" => "Your token is invalid, If you think this is but please contact support at t.me/p_nightwolf",
+                "text" => __("message.access_denied", [], $language),
             ]);
         }
 
