@@ -40,7 +40,7 @@ class TelegramBotCallbackQueryService
         ]);
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "Select your playlist 👇",
+            'text' => __('message.select_playlist', [], $user->language),
             'reply_markup' => $replyMarkup,
         ]);
 
@@ -75,7 +75,7 @@ class TelegramBotCallbackQueryService
         $playlist->songs()->attach($song);
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "✅ Song added to playlist successfully",
+            'text' => __('message.song_added_to_playlist', [], $user->language),
         ]);
     }
 

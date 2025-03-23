@@ -74,7 +74,7 @@ class TelegramBotService
                     [
                         [
                             'text' => 'فارسی 🇮🇷',
-                            'callback_data' => "setLanguage:fa"
+                            'callback_data' => "setLanguage:fa:"
                         ],
                         [
                             'text' => 'English 🇺🇸',
@@ -88,11 +88,11 @@ class TelegramBotService
         ]);
     }
 
-    public function commandNotFound($telegram, $chatId)
+    public function commandNotFound($telegram, $chatId, $language = 'en')
     {
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "😐 hmmm what are you talking about? Send me a song",
+            'text' => __('messages.command_not_found', [], $language),
         ]);
     }
 
@@ -168,7 +168,7 @@ class TelegramBotService
         return $message;
     }
 
-    public function uploadSongFromBotToSite($telegram, $chatId, $message, $user, $telegramBotService, $songService)
+    public function uploadSongFromBotToSite($telegram, $chatId, $message, $user, $telegramBotService, $songService, $language = 'en')
     {
         // get audio
         $audio = $message->getAudio();
@@ -179,7 +179,7 @@ class TelegramBotService
         // send loading text
         $songUploadingMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "Uploading {$audio->getTitle()}...",
+            'text' => __('message.song_uploading', [], $language)." {$audio->getTitle()}...",
         ]);
 
         // get file url
@@ -191,7 +191,7 @@ class TelegramBotService
         if (!$user->canUpload($audio->getFileSize())) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "🔥 You have reached your upload limit 3GB  \n Please send message to t.me/p_nightwolf",
+                'text' => __('message.upload_limitation', [], $language),
             ]);
             return;
         }
@@ -201,7 +201,7 @@ class TelegramBotService
         // response success message
         $songUploadedMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "🟢 Song has been uploaded successfully. wait for link....",
+            'text' => __('message.song_uploaded', [], $language),
         ]);
 
         //  delete and cleanup messages
@@ -221,7 +221,7 @@ class TelegramBotService
             'reply_markup' => Keyboard::make([
                 'inline_keyboard' => [
                     [
-                        ['text' => 'Add To Playlist', 'callback_data' => "showPlaylists:{$user->telegram_id}:{$song->id}"],
+                        ['text' => __('message.add_to_playlist', [], $language), 'callback_data' => "showPlaylists:{$user->telegram_id}:{$song->id}"],
                     ]
                 ]
             ])
@@ -324,17 +324,18 @@ class TelegramBotService
         ]);
     }
 
-    public function getAccess($telegram, $chatId, $encryptedToken, $account)
+    public function getAccess($telegram, $chatId, $encryptedToken, $account, $language = 'en')
     {
         $token = (new \App\Http\Controllers\api\v1\TokenController())->isTokenValid($encryptedToken);
         $language = $this->getChat($chatId)?->language;
-        
+
         if ($token) {
 
             $user = User::firstWhere("email", $token['email']);
             $user->update([
                 "telegram_id" => $account->getId(),
                 "telegram_username" => $account->username,
+                "language" => $language,
             ]);
 
             $telegram->sendMessage([
@@ -352,7 +353,7 @@ class TelegramBotService
 
     }
 
-    public function searchForSongFromSiteArchive($telegram, $chatId, $userEnteredText)
+    public function searchForSongFromSiteArchive($telegram, $chatId, $userEnteredText, $language = 'en')
     {
         $songs = Song::query()->where('name', 'LIKE', "%$userEnteredText%")->orWhere('artist', 'LIKE', "%$userEnteredText%")->take(10)->get();
 
@@ -361,7 +362,7 @@ class TelegramBotService
             'inline_keyboard' => [
                 [
                     [
-                        'text' => '🔎 Search The Internet',
+                        'text' =>__("message.search_in_internet", [], $language),
                         'callback_data' => "sOut:{$userEnteredText}:youtubemusic"
                     ],
                 ],
@@ -371,13 +372,13 @@ class TelegramBotService
         if ($songs->count() === 0) {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "🦦 Nothing found, For better result you can search through Internet",
+                'text' => __("message.nothing_found_internet", [], $language),
                 "reply_markup" => $replayMarkup,
             ]);
             return;
         }
 
-        $message = "🟣 Here is founded songs: \n\n";
+        $message = __("message.search_result", [], $language);
 
         foreach ($songs as $key => $song) {
             $artist = "{$song->artist} -" ?? '';
@@ -615,7 +616,7 @@ class TelegramBotService
         } else {
             $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact t.me/p_nightwolf",
+                'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact support",
             ]);
         }
     }

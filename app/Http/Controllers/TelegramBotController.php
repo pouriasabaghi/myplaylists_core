@@ -94,7 +94,7 @@ class TelegramBotController extends Controller
             // get access | this is static command
             if (str_starts_with($messageValue, 'getAccess#')) {
                 [$_, $token] = explode('#', $messageValue);
-                $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account);
+                $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account, $language);
                 return;
             }
 
@@ -116,17 +116,17 @@ class TelegramBotController extends Controller
                 }
 
                 // upload song and send success message
-                $telegramBotService->uploadSongFromBotToSite($this->telegram, $this->chatId, $this->message, $user, $telegramBotService, $songService);
+                $telegramBotService->uploadSongFromBotToSite($this->telegram, $this->chatId, $this->message, $user, $telegramBotService, $songService, $language);
                 return;
             }
 
             // user send text message handle and return 
             if (is_string($messageValue)) {
-                $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $messageValue);
+                $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $messageValue, $language);
                 return;
             }
 
-            $telegramBotService->commandNotFound($this->telegram, $this->chatId);
+            $telegramBotService->commandNotFound($this->telegram, $this->chatId, $language);
             return;
 
         } catch (\Throwable $th) {

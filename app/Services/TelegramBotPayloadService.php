@@ -54,7 +54,7 @@ class TelegramBotPayloadService
                 'inline_keyboard' => [
                     [
                         [
-                            'text' => 'Login',
+                            'text' => __('message.login_button', [], $language),
                             'login_url' => [
                                 'url' => config("app.app_url") . "/telegram-auth",
                             ],
