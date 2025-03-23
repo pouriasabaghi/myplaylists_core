@@ -25,14 +25,14 @@ class TelegramBotCallbackQueryService
      * @param TelegramBotApi $telegram
      * @param int $chatId
      * @param \Telegram\Bot\Objects\CallbackQuery $callbackQuery
-     * @param string|null $telegramUsername
+     * @param int $telegramId
      * @param int|string $songId
      * @return void
      */
-    public function showPlaylists(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $telegramUsername, int|string $songId): void
+    public function showPlaylists(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, int $telegramId, int|string $songId): void
     {
         $telegramBotService = new \App\Services\TelegramBotService();
-        $user = $this->getUser($telegramUsername);
+        $user = $this->getUser($telegramId);
         $playlistsInlineKeyboard = $telegramBotService->playlistsInlineKeyboard($user, 4, $songId);
 
         $replyMarkup = Keyboard::make([
@@ -53,14 +53,14 @@ class TelegramBotCallbackQueryService
      * @param TelegramBotApi $telegram
      * @param int $chatId
      * @param \Telegram\Bot\Objects\CallbackQuery $callbackQuery
-     * @param string $telegramUsername
+     * @param int $telegramId
      * @param int|string $playlistId
      * @param int|string $songId
      * @return void
      */
-    public function addToPlaylist(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $telegramUsername, int|string $playlistId, int|string $songId): void
+    public function addToPlaylist(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, int $telegramId, int|string $playlistId, int|string $songId): void
     {
-        $user = $this->getUser($telegramUsername);
+        $user = $this->getUser($telegramId);
         $playlist = Playlist::findOrFail($playlistId);
         $song = Song::findOrFail($songId);
 

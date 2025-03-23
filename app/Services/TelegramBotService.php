@@ -31,27 +31,33 @@ class TelegramBotService
         }
     }
 
-    public function sendWelcomeMessage($telegram, $chatId, int|null $userId, string $telegramUsername)
+    public function sendWelcomeMessage($telegram, $chatId, $account)
     {
         TelegramUser::updateOrCreate(
             ['chat_id' => $chatId],
-            ['username' => $telegramUsername]
+            ['username' => $account->username]
         );
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "👋 Hello {$telegramUsername}. \n\n",
+            'text' => "👋 Hello {$account->username}. \n\n",
             'reply_markup' => Keyboard::make([
                 'keyboard' => [
                     [
                         [
                             'text' => '👤 Support',
                         ],
+
+                        [
+                            'text' => '✈️ Tour',
+                        ],
+                    ],
+                    [
                         [
                             'text' => '🔑 Access',
                         ],
                         [
-                            'text' => '✈️ Tour',
+                            'text' => '📲 Login'
                         ]
                     ]
                 ],
@@ -215,7 +221,7 @@ class TelegramBotService
             'reply_markup' => Keyboard::make([
                 'inline_keyboard' => [
                     [
-                        ['text' => 'Add To Playlist', 'callback_data' => "showPlaylists:{$user->telegram_username}:{$song->id}"],
+                        ['text' => 'Add To Playlist', 'callback_data' => "showPlaylists:{$user->telegram_id}:{$song->id}"],
                     ]
                 ]
             ])
@@ -271,7 +277,7 @@ class TelegramBotService
             return;
         }
 
-        
+
         $results = [];
         foreach ($songs as $song) {
             $album = $song->album ?? 'unknwon';
@@ -318,21 +324,14 @@ class TelegramBotService
         ]);
     }
 
-    public function getAccess($telegram, $chatId, $encryptedToken, $telegramUsername)
+    public function getAccess($telegram, $chatId, $encryptedToken, $account)
     {
         $token = (new \App\Http\Controllers\api\v1\TokenController())->isTokenValid($encryptedToken);
         if ($token) {
-            if (empty($telegramUsername)) {
-                $telegram->sendMessage([
-                    "chat_id" => $chatId,
-                    "text" => "🫠 For accessing to bot you should have telegram username. Check tg://settings",
-                    "parse_mode" => "Markdown",
-                ]);
-                return;
-            }
+
             $user = User::firstWhere("email", $token['email']);
 
-            if ($user->telegram_username && $user->telegram_username === $telegramUsername) {
+            if ($user->telegram_username && $user->telegram_username === $account->username) {
                 $telegram->sendMessage([
                     "chat_id" => $chatId,
                     "text" => "🤔 It seems you already have access to bot, But we updated your access.",
@@ -340,7 +339,8 @@ class TelegramBotService
             }
 
             $user->update([
-                "telegram_username" => $telegramUsername,
+                "telegram_id" => $account->getId(),
+                "telegram_username" => $account->username,
             ]);
 
             $telegram->sendMessage([
@@ -404,7 +404,7 @@ class TelegramBotService
         $buttons = [];
 
         foreach ($playlists as $playlist) {
-            $callbackData = "addToPlaylist:{$user->telegram_username}:{$playlist->id}";
+            $callbackData = "addToPlaylist:{$user->telegram_id}:{$playlist->id}";
 
             if ($additionalData)
                 $callbackData .= ":$additionalData";
@@ -419,7 +419,7 @@ class TelegramBotService
         return array_chunk($buttons, $buttonsPerRow);
     }
 
-    public function sendSongToTelegram($telegram,  $chatId,  $songId)
+    public function sendSongToTelegram($telegram, $chatId, $songId)
     {
         $song = Song::firstWhere('id', $songId);
 

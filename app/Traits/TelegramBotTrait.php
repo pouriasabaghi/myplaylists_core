@@ -4,9 +4,9 @@ namespace App\Traits;
 
 trait TelegramBotTrait
 {
-    public function getUser($telegramUsername)
+    public function getUser($telegramId)
     {
-        return \App\Models\User::firstWhere('telegram_username', $telegramUsername);
+        return \App\Models\User::firstWhere('telegram_id', $telegramId);
     }
 
     /**

@@ -47,8 +47,8 @@ class TelegramBotController extends Controller
                 return;
             }
 
-            // get user by telegram username 
-            $user = $this->getUser($this->account->username);
+            // get user by telegram id 
+            $user = $this->getUser($this->account->getId());
             $language = TelegramUser::firstWhere('chat_id', $this->chatId)->language ?? 'en';
 
             // check for callback queries and return 
@@ -73,28 +73,28 @@ class TelegramBotController extends Controller
             }
 
             // check for payload and return "/start " has space after start
-            if (str_starts_with($this->message->getText(), '/start ')) {
+            if (str_starts_with($messageValue, '/start ')) {
                 $this->payloadHandler(new TelegramBotPayloadService(), $messageValue);
                 return;
             }
 
             // /dl_ command means user want to download a song
-            if (str_starts_with($this->message->getText(), '/dl_')) {
-                [$_, $songId] = explode('_', $this->message->getText());
+            if (str_starts_with($messageValue, '/dl_')) {
+                [$_, $songId] = explode('_', $messageValue);
                 $telegramBotService->sendSongToTelegram($this->telegram, $this->chatId, $songId);
                 return;
             }
 
             // send start message and return
-            if ($this->message->getText() === '/start') {
-                $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
+            if ($messageValue === '/start') {
+                $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
                 return;
             }
 
             // get access | this is static command
-            if (str_starts_with($this->message->getText(), 'getAccess#')) {
-                [$_, $token] = explode('#', $this->message->getText());
-                $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account->username);
+            if (str_starts_with($messageValue, 'getAccess#')) {
+                [$_, $token] = explode('#', $messageValue);
+                $telegramBotService->getAccess($this->telegram, $this->chatId, $token, $this->account);
                 return;
             }
 
@@ -121,8 +121,8 @@ class TelegramBotController extends Controller
             }
 
             // user send text message handle and return 
-            if (is_string($this->message->getText())) {
-                $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $this->message->getText());
+            if (is_string($messageValue)) {
+                $telegramBotService->searchForSongFromSiteArchive($this->telegram, $this->chatId, $messageValue);
                 return;
             }
 
@@ -191,9 +191,10 @@ class TelegramBotController extends Controller
             '👤 Support',
             '🔑 Access',
             '✈️ Tour',
+            '📲 Login',
         ];
 
-        return isset($buttons[$messageValue]);
+        return in_array($messageValue, $buttons);
     }
 
     public function keyboardHandler($userEnteredKeyboardButton, $user, $language, TelegramBotService $telegramBotService)
@@ -216,8 +217,23 @@ class TelegramBotController extends Controller
                 ]),
             ],
             '✈️ Tour' => function () use ($telegramBotService, $user) {
-                $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $user?->id, $this->account->username);
-            }
+                $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
+            },
+            '📲 Login' => [
+                'text' => 'Click on the button below',
+                "reply_markup" => Keyboard::make([
+                    'inline_keyboard' => [
+                        [
+                            [
+                                'text' => 'Login',
+                                'login_url' => [
+                                    'url' => config("app.app_url") . "/telegram-auth",
+                                ],
+                            ]
+                        ]
+                    ]
+                ]),
+            ],
         ];
         if (isset($buttons[$userEnteredKeyboardButton])) {
             if (is_callable($buttons[$userEnteredKeyboardButton])) {

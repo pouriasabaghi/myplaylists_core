@@ -86,4 +86,58 @@ class AuthenticationController extends Controller
             'user' => $user,
         ], 201);
     }
+
+    public function telegramAuth(Request $request)
+    {
+        if (Auth::check())
+            return redirect(config('app.frontend_url'));
+
+
+        $authData = $this->checkTelegramAuthorization($request->all());
+        $user = User::firstWhere('telegram_id', $authData['id']);
+
+        if (!$user)
+            $user = User::create([
+                'name' => "{$authData['first_name']}_" . uniqid(),
+                'telegram_id' => $authData['id'],
+                'telegram_name' => $authData['username'] ?? null,
+                'role' => 'uploader',
+                'password' => bcrypt(\Illuminate\Support\Str::random(16))
+            ]);
+
+
+        Auth::login($user);
+
+        return redirect(config('app.frontend_url'));
+    }
+
+    /**
+     * Check Authorization
+     * @link https://gist.github.com/anonymous/6516521b1fb3b464534fbc30ea3573c2
+     * @param array $authData
+     * @throws \Exception
+     */
+    public function checkTelegramAuthorization($authData)
+    {
+        $botToken = config('app.telegram_bot_token');
+
+        $check_hash = $authData['hash'];
+        unset($authData['hash']);
+        $data_check_arr = [];
+        foreach ($authData as $key => $value) {
+            $data_check_arr[] = $key . '=' . $value;
+        }
+        sort($data_check_arr);
+        $data_check_string = implode("\n", $data_check_arr);
+        $secret_key = hash('sha256', $botToken, true);
+        $hash = hash_hmac('sha256', $data_check_string, $secret_key);
+        if (strcmp($hash, $check_hash) !== 0) {
+            throw new \Exception('Data is NOT from Telegram');
+        }
+        if ((time() - $authData['auth_date']) > 86400) {
+            throw new \Exception('Data is outdated');
+        }
+        return $authData;
+    }
+
 }
