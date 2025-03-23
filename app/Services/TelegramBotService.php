@@ -96,7 +96,7 @@ class TelegramBotService
     {
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => __('messages.command_not_found', [], $language),
+            'text' => __('message.command_not_found', [], $language),
         ]);
     }
 

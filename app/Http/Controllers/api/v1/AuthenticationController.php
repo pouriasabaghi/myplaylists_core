@@ -30,6 +30,15 @@ class AuthenticationController extends Controller
             'success' => false,
         ], 401);
     }
+    
+    public function logout(){
+        Auth::logout();
+        return response()->json([
+            'message' => 'User logged out successfully',
+            'success' => true,
+        ]);
+    }
+
 
     public function otp(Request $request)
     {
@@ -101,6 +110,7 @@ class AuthenticationController extends Controller
                 'name' => "{$authData['first_name']}_" . uniqid(),
                 'telegram_id' => $authData['id'],
                 'telegram_name' => $authData['username'] ?? null,
+                'nickname' => $authData['first_name'] ?? null,
                 'role' => 'uploader',
                 'password' => bcrypt(\Illuminate\Support\Str::random(16))
             ]);
