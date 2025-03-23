@@ -79,6 +79,10 @@ class TelegramBotService
                         [
                             'text' => 'English 🇺🇸',
                             'callback_data' => "setLanguage:en"
+                        ],
+                        [
+                            'text' => 'Esperanto 💚',
+                            'callback_data' => "setLanguage:eo"
                         ]
                     ]
                 ],
