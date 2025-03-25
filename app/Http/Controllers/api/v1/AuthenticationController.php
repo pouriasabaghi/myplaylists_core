@@ -83,7 +83,7 @@ class AuthenticationController extends Controller
         }
 
         $user = User::create([
-            'name' => $credentials['name'],
+            'name' => strtolower($credentials['name']),
             'email' => $credentials['email'],
             'password' => Hash::make($credentials['password']),
             'role' => 'uploader',
@@ -106,9 +106,10 @@ class AuthenticationController extends Controller
         $authData = $this->checkTelegramAuthorization($request->all());
         $user = User::firstWhere('telegram_id', $authData['id']);
 
-        if (!$user)
+        if (!$user) {
+            $name = strtolower($authData['first_name']) . "_" . uniqid();
             $user = User::create([
-                'name' => "{$authData['first_name']}_" . uniqid(),
+                'name' => $name,
                 'telegram_id' => $authData['id'],
                 'telegram_name' => $authData['username'] ?? null,
                 'nickname' => $authData['first_name'] ?? null,
@@ -116,6 +117,7 @@ class AuthenticationController extends Controller
                 'password' => bcrypt(\Illuminate\Support\Str::random(16))
             ]);
 
+        }
 
         Auth::login($user);
 

@@ -7,6 +7,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::put('/profile', [App\Http\Controllers\api\v1\ProfileController::class, 'update'])->middleware('auth:sanctum');
+
+// Telegram bot access token
 Route::get('/token', [TokenController::class, 'create'])->middleware('auth:sanctum');
 
 Route::apiResource('/songs', \App\Http\Controllers\api\v1\SongController::class)->except(['show'])->middleware('auth:sanctum');
