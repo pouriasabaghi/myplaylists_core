@@ -14,21 +14,22 @@ class ArtistController extends Controller
 {
     public function index()
     {
-        $artists = Song::select(
-            'songs.artist',
-            DB::raw('COUNT(songs.id) as song_count'),
-            'artists.cover'
-        )
-        ->leftJoin('artists', 'songs.artist', '=', 'artists.name')
-        ->whereNotNull('songs.artist')
-        ->groupBy('songs.artist', 'artists.cover')
-        ->orderBy('song_count', 'desc')
-        ->take(20)
-        ->get();
-
+        $artists = cache()->remember('top_artists', now()->addDay(), function () {
+            return Song::select(
+                'songs.artist',
+                DB::raw('COUNT(songs.id) as song_count'),
+                'artists.cover'
+            )
+            ->leftJoin('artists', 'songs.artist', '=', 'artists.name')
+            ->whereNotNull('songs.artist')
+            ->groupBy('songs.artist', 'artists.cover')
+            ->orderBy('song_count', 'desc')
+            ->take(20)
+            ->get();
+        });
+    
         return response()->json($artists);
     }
-
 
     public function getSongs(string $artistName)
     {
