@@ -30,8 +30,9 @@ class AuthenticationController extends Controller
             'success' => false,
         ], 401);
     }
-    
-    public function logout(){
+
+    public function logout()
+    {
         Auth::logout();
         return response()->json([
             'message' => 'User logged out successfully',
@@ -99,7 +100,7 @@ class AuthenticationController extends Controller
     public function telegramAuth(Request $request)
     {
         if (Auth::check())
-            return redirect(config('app.frontend_url'));
+            return response()->json(['message' => 'User already logged in'], 200);
 
 
         $authData = $this->checkTelegramAuthorization($request->all());
@@ -118,7 +119,10 @@ class AuthenticationController extends Controller
 
         Auth::login($user);
 
-        return redirect(config('app.frontend_url'));
+        return response()->json([
+            'message' => 'User logged in successfully',
+            'success' => true,
+        ]);
     }
 
     /**

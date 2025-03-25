@@ -40,9 +40,17 @@ class TelegramBotService
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "👋 Hello {$account->username}. \n\n",
+            'text' => "👋 Hi {$account->username}",
             'reply_markup' => Keyboard::make([
                 'keyboard' => [
+                    [
+                        [
+                            'text' => '🔑 Access',
+                        ],
+                        [
+                            'text' => '🟣 Application'
+                        ]
+                    ],
                     [
                         [
                             'text' => '👤 Support',
@@ -52,19 +60,12 @@ class TelegramBotService
                             'text' => '✈️ Tour',
                         ],
                     ],
-                    [
-                        [
-                            'text' => '🔑 Access',
-                        ],
-                        [
-                            'text' => '📲 Login'
-                        ]
-                    ]
                 ],
                 'resize_keyboard' => true,
                 'one_time_keyboard' => false,
             ])
         ]);
+
 
         $telegram->sendMessage([
             'chat_id' => $chatId,
@@ -80,6 +81,8 @@ class TelegramBotService
                             'text' => 'English 🇺🇸',
                             'callback_data' => "setLanguage:en"
                         ],
+                    ],
+                    [
                         [
                             'text' => 'Esperanto 💚',
                             'callback_data' => "setLanguage:eo"
@@ -183,7 +186,7 @@ class TelegramBotService
         // send loading text
         $songUploadingMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => __('message.song_uploading', [], $language)." {$audio->getTitle()}...",
+            'text' => __('message.song_uploading', [], $language) . " {$audio->getTitle()}...",
         ]);
 
         // get file url
@@ -366,7 +369,7 @@ class TelegramBotService
             'inline_keyboard' => [
                 [
                     [
-                        'text' =>__("message.search_in_internet", [], $language),
+                        'text' => __("message.search_in_internet", [], $language),
                         'callback_data' => "sOut:{$userEnteredText}:youtubemusic"
                     ],
                 ],

@@ -110,7 +110,7 @@ class TelegramBotController extends Controller
                 if (!$user) {
                     $this->telegram->sendMessage([
                         'chat_id' => $this->chatId,
-                        'text' => "You are not registered. \n Please send message to t.me/p_nightwolf"
+                        'text' => "You are not registered. \nPlease contact support"
                     ]);
                     return;
                 }
@@ -134,8 +134,8 @@ class TelegramBotController extends Controller
             if ($this->chatId) {
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    //'text' => "Some thing went wrong. If you think this is a bug contact support please.",
-                    'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
+                    'text' => "Some thing went wrong. If you think this is a bug contact support please.",
+                    //'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
                 ]);
             }
             return;
@@ -191,7 +191,7 @@ class TelegramBotController extends Controller
             '👤 Support',
             '🔑 Access',
             '✈️ Tour',
-            '📲 Login',
+            '🟣 Application'
         ];
 
         return in_array($messageValue, $buttons);
@@ -219,21 +219,21 @@ class TelegramBotController extends Controller
             '✈️ Tour' => function () use ($telegramBotService, $user) {
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
             },
-            '📲 Login' => [
-                'text' =>__("message.telegram_login", [], $language),
+            '🟣 Application'=>[
+                'text' =>__("message.application_introduce", [], $language),
                 "reply_markup" => Keyboard::make([
                     'inline_keyboard' => [
                         [
                             [
-                                'text' => __("message.login_button", [], $language),
+                                'text' =>__("message.login_button", [], $language),
                                 'login_url' => [
-                                    'url' => config("app.app_url") . "/telegram-auth",
+                                    'url' => config("app.frontend_url") . "/telegramauth",
                                 ],
                             ]
                         ]
                     ]
                 ]),
-            ],
+            ]
         ];
         if (isset($buttons[$userEnteredKeyboardButton])) {
             if (is_callable($buttons[$userEnteredKeyboardButton])) {
