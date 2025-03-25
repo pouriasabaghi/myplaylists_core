@@ -148,18 +148,21 @@ class PlaylistController extends Controller
 
     public function getTopPlaylists()
     {
-        $mostFollowedPlaylists = Playlist::withCount(['followers', 'songs']) 
-            ->having('songs_count', '>=', 5) 
-            ->orderByDesc('followers_count') 
-            ->take(50) 
-            ->get();
-    
+        $mostFollowedPlaylists = cache()->remember('top_playlists', now()->addDay(), function () {
+            return Playlist::withCount(['followers', 'songs'])
+                ->having('songs_count', '>=', 5)
+                ->orderByDesc('followers_count')
+                ->take(50)
+                ->get();
+        });
+
         return response()->json(PlaylistResource::collection($mostFollowedPlaylists));
     }
 
-    public function getLatestPlaylists(){
+    public function getLatestPlaylists()
+    {
         $latestPlaylists = Playlist::orderByDesc('created_at')->take(10)->get();
         return response()->json(PlaylistResource::collection($latestPlaylists));
     }
-    
+
 }

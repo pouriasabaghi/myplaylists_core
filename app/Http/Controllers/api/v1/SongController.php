@@ -36,7 +36,7 @@ class SongController extends Controller
             $file = $data['file'];
 
             $song = $songService->createSong($file);
-            
+
             // Return the response
             return response()->json([
                 'message' => 'Song uploaded successfully',
@@ -153,21 +153,25 @@ class SongController extends Controller
         return $songService->streamHandler($id);
     }
 
-    public function download(string $id, SongService $songService){
+    public function download(string $id, SongService $songService)
+    {
         return $songService->downloadHandler($id);
     }
 
     public function getTopSongs()
     {
-        $mostFavoritesSongs = Song::withCount('favorites')
-            ->orderByDesc('favorites_count')
-            ->take(30)
-            ->get();
+        $mostFavoritesSongs = cache()->remember('top_songs', now()->addDay(), function () {
+            return Song::withCount('favorites')
+                ->orderByDesc('favorites_count')
+                ->take(30)
+                ->get();
+        });
 
         return response()->json(SongResource::collection($mostFavoritesSongs));
     }
 
-    public function getLatestSongs(){
+    public function getLatestSongs()
+    {
         $latestSong = Song::orderByDesc('created_at')->take(30)->get();
         return response()->json($latestSong);
     }
