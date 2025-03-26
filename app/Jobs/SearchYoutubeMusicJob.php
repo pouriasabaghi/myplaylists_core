@@ -41,7 +41,7 @@ class SearchYoutubeMusicJob implements ShouldQueue
         $separator = "|||";
 
         // run scdl script and get output
-        $command = "yt-dlp ytsearch4:$escapedUserEnteredText --print '%(title)s$separator%(id)s'";
+        $command = "yt-dlp ytsearch:$escapedUserEnteredText  --max-downloads 3 --print '%(title)s$separator%(id)s'";
 
         // out put of scdl command contains
         $output = shell_exec($command);
@@ -86,7 +86,7 @@ class SearchYoutubeMusicJob implements ShouldQueue
 
         $telegram->sendMessage([
             "chat_id" => $chatId,
-            "text" => "  $userEnteredText ",
+            "text" => "Search result for:\n$userEnteredText ",
             'reply_markup' => $replyMarkup,
         ]);
         

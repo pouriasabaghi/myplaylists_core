@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Playlist;
 use App\Models\Song;
 use Telegram\Bot\Keyboard\Keyboard;
-use Telegram\Bot\FileUpload\InputFile;
 use App\Traits\TelegramBotTrait;
 use App\Models\TelegramUser;
 use Telegram\Bot\Api as TelegramBotApi;
@@ -86,17 +85,27 @@ class TelegramBotCallbackQueryService
      * @param TelegramBotApi $telegram
      * @param int $chatId
      * @param \Telegram\Bot\Objects\CallbackQuery $callbackQuery
-     * @param string $userEnteredText
+     * @param string $cacheKey
      * @param string $resource
      * @return void
      */
-    public function sOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $userEnteredText, string $resource): void
+    public function sOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $cacheKey, string $resource, $language): void
     {
+        if (!cache()->has($cacheKey)) {
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text'=> __('message.request_outdated', [], $language),
+            ]);
+            return;
+        }
+        $userEnteredText = cache()->get($cacheKey);
+
+
         if ($resource == 'youtubemusic') {
             // inform user that search is in process
             $stMessage = $telegram->sendMessage([
                 "chat_id" => $chatId,
-                "text" => "Searching for $userEnteredText ...",
+                "text" => __('message.search_for', [], $language) . " $userEnteredText ...",
             ]);
 
             dispatch(new \App\Jobs\SearchYoutubeMusicJob($chatId, $stMessage->getMessageId(), $userEnteredText));
@@ -136,68 +145,7 @@ class TelegramBotCallbackQueryService
                 'chat_id' => $chatId,
                 'text' => "⏳ Connecting to YouTube server...",
             ]);
-
-            if (str_starts_with($userEnteredUrl, 'https://youtu.be'))
-                $userEnteredUrl = $this->expandUrl($userEnteredUrl);
-
-            // escape URL to prevent shell injection
-            $url = escapeshellarg($userEnteredUrl);
-            $downloadPath = "/var/www/downloads/";
-
-            // Step 1: Get the expected filename using --get-filename
-            $getFilenameCmd = "/usr/local/bin/yt-dlp --get-filename --audio-format mp3 --embed-metadata  --output '{$downloadPath}%(title)s.mp3' $url";
-            $downloadedFile = trim(shell_exec($getFilenameCmd));
-
-
-            // Inform user that downloading song started
-            $dlFromYmMessage = $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => "📥 Downloading " . basename($downloadedFile) . " From Youtube server....",
-            ]);
-
-            // Step 2: Download the audio file using yt-dlp
-            $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --embed-thumbnail --embed-metadata --output '{$downloadPath}%(title)s.%(ext)s' $url 2>&1";
-            shell_exec($downloadCommand);
-
-            // inform user that sending song started
-            $almostDoneMessage = $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => "⬆️ Almost done, Sending for you...",
-            ]);
-
-            // clean up messages
-            $telegram->deleteMessage([
-                'chat_id' => $chatId,
-                'message_id' => $cnToYmMessage->getMessageId(),
-            ]);
-            $telegram->deleteMessage([
-                'chat_id' => $chatId,
-                'message_id' => $dlFromYmMessage->getMessageId(),
-            ]);
-            $telegram->deleteMessage([
-                'chat_id' => $chatId,
-                'message_id' => $almostDoneMessage->getMessageId(),
-            ]);
-
-            // check if file exists, then send and remove it
-            if (file_exists($downloadedFile)) {
-                $params = [
-                    'chat_id' => $chatId,
-                    'audio' => InputFile::create($downloadedFile),
-                    'thumb' => InputFile::create("https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png"),
-                    'caption' => "[🟣 Myplaylists](https://t.me/myplaylists_ir)",
-                    'parse_mode' => 'Markdown'
-                ];
-                $telegram->sendAudio($params);
-
-                // delete the file after sending
-                unlink($downloadedFile);
-            } else {
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact t.me/p_nightwolf",
-                ]);
-            }
+            dispatch(new \App\Jobs\DownloadYoutubeMusicJob($chatId, $identifier, $cnToYmMessage->getMessageId()));
             return;
         }
 

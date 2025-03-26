@@ -364,13 +364,16 @@ class TelegramBotService
     {
         $songs = Song::query()->where('name', 'LIKE', "%$userEnteredText%")->orWhere('artist', 'LIKE', "%$userEnteredText%")->take(10)->get();
 
+        $cacheKey='sOut_'.uniqid();
+        cache()->put($cacheKey, $userEnteredText, now()->addMinutes(5));
+
         // search through internet
         $replayMarkup = Keyboard::make([
             'inline_keyboard' => [
                 [
                     [
                         'text' => __("message.search_in_internet", [], $language),
-                        'callback_data' => "sOut:{$userEnteredText}:youtubemusic"
+                        'callback_data' => "sOut:{$cacheKey}:youtubemusic:$language"
                     ],
                 ],
             ],
@@ -562,7 +565,7 @@ class TelegramBotService
         // inform user that connecting is starting
         $cnToYmMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "⏳ Connecting to YouTube server...",
+            'text' => "⏳ Connecting to server...",
         ]);
 
         if (str_starts_with($userEnteredUrl, 'https://youtu.be'))

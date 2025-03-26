@@ -134,8 +134,8 @@ class TelegramBotController extends Controller
             if ($this->chatId) {
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "Some thing went wrong. If you think this is a bug contact support please.",
-                    //'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
+                    //'text' => "Some thing went wrong. If you think this is a bug contact support please.",
+                    'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
                 ]);
             }
             return;
