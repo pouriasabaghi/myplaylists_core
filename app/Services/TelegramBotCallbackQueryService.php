@@ -93,66 +93,13 @@ class TelegramBotCallbackQueryService
     public function sOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $userEnteredText, string $resource): void
     {
         if ($resource == 'youtubemusic') {
-            // prevent from sending shell
-            $escapedUserEnteredText = escapeshellarg($userEnteredText);
-
-            // for exploding title from url 
-            $separator = "|||";
-
-            // run scdl script and get output
-            $command = "yt-dlp ytsearch2:$escapedUserEnteredText --print '%(title)s$separator%(id)s'";
-
             // inform user that search is in process
             $stMessage = $telegram->sendMessage([
                 "chat_id" => $chatId,
-                "text" => "  $userEnteredText",
+                "text" => "Searching for $userEnteredText ...",
             ]);
 
-            // out put of scdl command contains
-            $output = shell_exec($command);
-
-            if (empty($output)) {
-                $telegram->sendMessage([
-                    "chat_id" => $chatId,
-                    "text" => "  $userEnteredText",
-                ]);
-                return;
-            }
-
-            // split output 
-            $results = explode("\n", $output);
-
-            // create inline keyboard
-            $inlineKeyboard = [];
-            foreach ($results as $result) {
-                $song = explode($separator, $result);
-
-                if (empty($song[0]))
-                    continue;
-
-                $inlineKeyboard[] = [
-                    [
-                        'text' => $song[0], // song title
-                        'callback_data' => "dlOut:{$song[1]}:youtubemusic", // song id
-                    ]
-                ];
-            }
-
-            $replyMarkup = Keyboard::make([
-                'inline_keyboard' => $inlineKeyboard,
-            ]);
-
-            // cleanup messages
-            $telegram->deleteMessage([
-                "chat_id" => $chatId,
-                "message_id" => $stMessage->getMessageId(),
-            ]);
-
-            $telegram->sendMessage([
-                "chat_id" => $chatId,
-                "text" => "  $userEnteredText ",
-                'reply_markup' => $replyMarkup,
-            ]);
+            dispatch(new \App\Jobs\SearchYoutubeMusicJob($chatId, $stMessage->getMessageId(), $userEnteredText));
             return;
         }
 
