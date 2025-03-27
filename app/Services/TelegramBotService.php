@@ -367,21 +367,30 @@ class TelegramBotService
         $cacheKey='sOut_'.uniqid();
         cache()->put($cacheKey, $userEnteredText, now()->addMinutes(5));
 
+        $searchMessage = $telegram->sendMessage([
+            "chat_id" => $chatId,
+            "text" => __("message.search_for", [], $language) . " $userEnteredText ...",
+        ]);
+
+        // get id for edit and delete message
+        $searchMessageId = $searchMessage->getMessageId();
+
         // search through internet
         $replayMarkup = Keyboard::make([
             'inline_keyboard' => [
                 [
                     [
                         'text' => __("message.search_in_internet", [], $language),
-                        'callback_data' => "sOut:{$cacheKey}:youtubemusic:$language"
+                        'callback_data' => "sOut:{$cacheKey}:youtubemusic:$language:$searchMessageId"
                     ],
                 ],
             ],
         ]);
 
         if ($songs->count() === 0) {
-            $telegram->sendMessage([
+            $telegram->editMessageText([
                 'chat_id' => $chatId,
+                'message_id' => $searchMessageId,
                 'text' => __("message.nothing_found_internet", [], $language),
                 "reply_markup" => $replayMarkup,
             ]);
@@ -396,11 +405,13 @@ class TelegramBotService
             $message .= "$key. 🎧 $artist {$song->name} \n🔗 {$song->directLink} \n📥 Download /dl_{$song->id}\n\n";
         }
 
-        $telegram->sendMessage([
-            "chat_id" => $chatId,
-            "text" => $message,
-            "reply_markup" => $replayMarkup
+        $telegram->editMessageText([
+            'chat_id' => $chatId,
+            'message_id' => $searchMessageId,
+            'text' => $message,
+            "reply_markup" => $replayMarkup,
         ]);
+
     }
 
     public function playlistsInlineKeyboard($user, $buttonsPerRow = 2, $additionalData = null)
