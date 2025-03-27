@@ -89,7 +89,7 @@ class TelegramBotCallbackQueryService
      * @param string $resource
      * @return void
      */
-    public function sOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $cacheKey, string $resource, $language): void
+    public function sOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string|null $cacheKey, string $resource, $language, $searchMessageId): void
     {
         if (!cache()->has($cacheKey)) {
             $telegram->sendMessage([
@@ -102,6 +102,12 @@ class TelegramBotCallbackQueryService
 
 
         if ($resource == 'youtubemusic') {
+            // delete search message
+            $telegram->deleteMessage([
+                'chat_id' => $chatId,
+                'message_id' => $searchMessageId
+            ]);
+
             // inform user that search is in process
             $stMessage = $telegram->sendMessage([
                 "chat_id" => $chatId,
@@ -127,6 +133,18 @@ class TelegramBotCallbackQueryService
      */
     public function dlOut(TelegramBotApi $telegram, int $chatId, CallbackQuery $callbackQuery, string $identifier, string $resource): void
     {
+        // prevent user from sending rapidly requests   
+        $lockKey = "dl_job_lock_$chatId";
+        $lock = cache()->lock($lockKey, 10);
+
+        if(!$lock->get()){
+            $telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => "🧘 Please wait for the previous request to finish before sending a new one.",
+            ]);
+            return;
+        }
+
         if ($resource == 'youtubemusic') {
             $userEnteredUrl = "https://www.youtube.com/watch?v=$identifier";
 
