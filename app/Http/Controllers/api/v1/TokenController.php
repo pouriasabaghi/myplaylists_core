@@ -23,7 +23,7 @@ class TokenController extends Controller
     {
         $token = decrypt($token);
 
-        if (Carbon::parse($token['expires_at'])->isPast())
+        if (Carbon::parse($token['expires_at'])->isPast() || empty($token['email']))
             return false;
 
         return $token;

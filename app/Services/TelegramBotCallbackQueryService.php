@@ -161,7 +161,7 @@ class TelegramBotCallbackQueryService
             // inform user that connecting is starting
             $cnToYmMessage = $telegram->sendMessage([
                 'chat_id' => $chatId,
-                'text' => "⏳ Connecting to YouTube server...",
+                'text' => "⏳ Connecting to server...",
             ]);
             dispatch(new \App\Jobs\DownloadYoutubeMusicJob($chatId, $identifier, $cnToYmMessage->getMessageId()));
             return;
