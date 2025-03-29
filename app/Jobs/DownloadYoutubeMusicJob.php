@@ -53,26 +53,25 @@ class DownloadYoutubeMusicJob implements ShouldQueue
         $url = escapeshellarg($userEnteredUrl);
         $downloadPath = "/var/www/downloads/";
 
-        // Step 1: Get the expected filename using --get-filename
-        $getFilenameCmd = "/usr/local/bin/yt-dlp --get-filename --audio-format mp3 --embed-metadata  --output '{$downloadPath}%(title)s.mp3' $url";
-        $downloadedFile = trim(shell_exec($getFilenameCmd));
-
-
         // Inform user that downloading song started
         $dlFromYmMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => "📥 Downloading " . basename($downloadedFile) . " From server....",
+            'text' => "📥 Downloading From server....",
         ]);
 
         // Step 2: Download the audio file using yt-dlp
-        $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --embed-thumbnail --embed-metadata --output '{$downloadPath}%(title)s.%(ext)s' $url 2>&1";
-        shell_exec($downloadCommand);
+        $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --output '{$downloadPath}%(title)s.%(ext)s' --concurrent-fragments 10 $url 2>&1";
+        $commandOutput = shell_exec($downloadCommand);
 
         // inform user that sending song started
         $almostDoneMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => "⬆️ Almost done, Sending for you...",
         ]);
+
+        // extract file name
+        preg_match('/\[ExtractAudio\] Destination: (.+\.mp3)/', $commandOutput, $matches);
+        $downloadedFile = $matches[1] ?? null;
 
         // clean up messages
         $telegram->deleteMessage([
