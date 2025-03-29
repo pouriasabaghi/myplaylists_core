@@ -20,5 +20,6 @@ return [
     "song_added_to_playlist"=>"✅ La kanto estis aldonita al la ludlisto",
     "application_introduce"=>"🟣 MyPlaylists estas moderna muzika platformo, kiu permesas al vi krei viajn proprajn ludlistojn, dividi ilin kun aliaj, kaj ĝui vian preferatan muzikon ĉiutempe, ĉie. Kun flua uzantinterfaco kaj altnivelaj trajtoj, ni alportas al vi senkomparan muzikan sperton.",
     "search_for"=>"🔎 Serĉante",
-    "request_outdated"=>"🦦 Via peto estas neĝisdata. Bonvolu serĉi denove."
+    "request_outdated"=>"🦦 Via peto estas neĝisdata. Bonvolu serĉi denove.",
+    "invalid_request"=>"⛔️ Via peto estas nevalida. Se vi opinias, ke ĉi tio estas eraro, bonvolu kontakti subtenon.",
 ];

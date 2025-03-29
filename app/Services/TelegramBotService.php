@@ -497,7 +497,7 @@ class TelegramBotService
         ]);
     }
 
-    public function getFromSoundCloud($telegram, $chatId, $userEnteredUrl, $isUrl = true)
+    public function getFromSoundCloud($telegram, $chatId, $userEnteredUrl)
     {
         $dlFromScMessage = $telegram->sendMessage([
             'chat_id' => $chatId,
@@ -511,7 +511,7 @@ class TelegramBotService
         $url = escapeshellarg($userEnteredUrl);
 
         // run scdl script and get output
-        $command = $isUrl ? "/usr/local/bin/scdl -l $url --overwrite  2>&1" : "/usr/local/bin/scdl -s $url -n 1  2>&1";
+        $command =  "/usr/local/bin/scdl -l $url --overwrite  2>&1 --no-playlist ";
 
         // out put of scdl command contains
         $output = shell_exec($command);

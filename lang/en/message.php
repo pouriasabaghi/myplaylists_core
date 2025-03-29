@@ -20,5 +20,6 @@ return [
     "song_added_to_playlist"=>"✅ Song has been added to playlist",
     "application_introduce"=>"🟣 MyPlaylists is a modern music platform that allows you to create your own playlists, share them with others, and enjoy listening to your favorite music anytime, anywhere. With a smooth user interface and advanced features, we bring you an unparalleled music experience",
     "search_for"=>"🔎 Searching for",
-    "request_outdated"=>"🦦 Your request is outdated. Please search again"
+    "request_outdated"=>"🦦 Your request is outdated. Please search again",
+    "invalid_request"=>"⛔️ Your request is invalid, If you think this is wrong please contact support.",
 ];
