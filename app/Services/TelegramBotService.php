@@ -45,9 +45,6 @@ class TelegramBotService
                 'keyboard' => [
                     [
                         [
-                            'text' => '🔑 Access',
-                        ],
-                        [
                             'text' => '🟣 Application'
                         ]
                     ],
@@ -364,7 +361,7 @@ class TelegramBotService
     {
         $songs = Song::query()->where('name', 'LIKE', "%$userEnteredText%")->orWhere('artist', 'LIKE', "%$userEnteredText%")->take(10)->get();
 
-        $cacheKey='sOut_'.uniqid();
+        $cacheKey = 'sOut_' . uniqid();
         cache()->put($cacheKey, $userEnteredText, now()->addMinutes(5));
 
         $searchMessage = $telegram->sendMessage([
@@ -511,7 +508,7 @@ class TelegramBotService
         $url = escapeshellarg($userEnteredUrl);
 
         // run scdl script and get output
-        $command =  "/usr/local/bin/scdl -l $url --overwrite  2>&1 --no-playlist ";
+        $command = "/usr/local/bin/scdl -l $url --overwrite  2>&1 --no-playlist ";
 
         // out put of scdl command contains
         $output = shell_exec($command);

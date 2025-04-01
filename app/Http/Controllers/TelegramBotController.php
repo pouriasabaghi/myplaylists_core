@@ -203,32 +203,17 @@ class TelegramBotController extends Controller
             '👤 Support' => [
                 "text" => "👤 Support: @p_nightwolf",
             ],
-            '🔑 Access' => [
-                "text" => __("message.need_access", [], $language),
-                "reply_markup" => Keyboard::make([
-                    'inline_keyboard' => [
-                        [
-                            [
-                                'text' => __("message.token_button", [], $language),
-                                'url' => config("app.frontend_url") . "/songs/upload",
-                            ]
-                        ]
-                    ]
-                ]),
-            ],
             '✈️ Tour' => function () use ($telegramBotService, $user) {
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
             },
             '🟣 Application'=>[
-                'text' =>__("message.application_introduce", [], $language),
+                'text' =>__("message.go_to_app_desc", [], $language),
                 "reply_markup" => Keyboard::make([
                     'inline_keyboard' => [
                         [
                             [
-                                'text' =>__("message.login_button", [], $language),
-                                'login_url' => [
-                                    'url' => config("app.frontend_url") . "/telegramauth",
-                                ],
+                                'text' =>__("message.open_app", [], $language),
+                                'url' => config("app.frontend_url")
                             ]
                         ]
                     ]

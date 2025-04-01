@@ -22,4 +22,6 @@ return [
     "search_for"=>"🔎 Serĉante",
     "request_outdated"=>"🦦 Via peto estas neĝisdata. Bonvolu serĉi denove.",
     "invalid_request"=>"⛔️ Via peto estas nevalida. Se vi opinias, ke ĉi tio estas eraro, bonvolu kontakti subtenon.",
+    "open_app"=>"Malfermu aplikaĵon",
+    "go_to_app_desc" => "🟣 Klaku la suban ligilon por eniri la retan aplikaĵon MyPlaylists 👇"
 ];

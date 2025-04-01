@@ -22,4 +22,6 @@ return [
     "search_for"=>"🔎 Searching for",
     "request_outdated"=>"🦦 Your request is outdated. Please search again",
     "invalid_request"=>"⛔️ Your request is invalid, If you think this is wrong please contact support.",
+    "open_app"=>"Open Application",
+    "go_to_app_desc"=>"🟣 MyPlaylists also have web application, Click link below 👇"
 ];

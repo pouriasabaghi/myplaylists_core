@@ -60,7 +60,7 @@ class DownloadYoutubeMusicJob implements ShouldQueue
         ]);
 
         // Step 2: Download the audio file using yt-dlp
-        $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --output '{$downloadPath}%(title)s.%(ext)s' --concurrent-fragments 10 $url 2>&1";
+        $downloadCommand = "/usr/local/bin/yt-dlp -x --playlist-items 1 --max-filesize 20M --audio-format mp3 --output '{$downloadPath}%(title)s.%(ext)s'  --concurrent-fragments 10 --add-metadata --parse-metadata 'title:%(title)s' '$url' 2>&1";
         $commandOutput = shell_exec($downloadCommand);
 
         // inform user that sending song started
