@@ -39,7 +39,7 @@ class TelegramBotCallbackQueryService
         ]);
         $telegram->sendMessage([
             'chat_id' => $chatId,
-            'text' => __('message.select_playlist', [], $user->language),
+            'text' => __('message.select_playlists', [], $user->language),
             'reply_markup' => $replyMarkup,
         ]);
 
