@@ -71,12 +71,7 @@ class SongController extends Controller
         try {
             $song = Song::findOrFail($id);
 
-            if ($song->user_id !== auth()->user()->id && auth()->user()->role !== 'admin') {
-                return response()->json([
-                    'message' => 'Only owner can make these changes',
-                    'success' => false
-                ], 403);
-            }
+            \Gate::authorize('modify', $song);
 
             // Update the song
             $song->update([
@@ -93,7 +88,7 @@ class SongController extends Controller
             ]);
         } catch (\Throwable $th) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' =>$th?->getCode() === 500 ? 'An error occurred' : $th->getMessage(),
                 'error' => $th->getMessage(),
                 'success' => false,
             ], 500);
@@ -104,6 +99,8 @@ class SongController extends Controller
     {
         try {
             $song = Song::findOrFail($id);
+
+            \Gate::authorize('modify', $song);
 
             $songService->deleteSong($song);
 
@@ -132,6 +129,7 @@ class SongController extends Controller
             $songs = Song::whereIn('id', $ids)->get();
 
             foreach ($songs as $song) {
+                \Gate::authorize('modify', $song);
                 $songService->deleteSong($song);
             }
 

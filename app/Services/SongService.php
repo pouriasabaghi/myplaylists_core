@@ -234,11 +234,6 @@ class SongService
 
     public function deleteSong($song)
     {
-        if ($song->user_id !== auth()->user()->id)
-            throw new Exception('Only owner can make these changes', 403);
-
-
-
         $songPath = $song->path;
         $coverPath = $song->cover;
 

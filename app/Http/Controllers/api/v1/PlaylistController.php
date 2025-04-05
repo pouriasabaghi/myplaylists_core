@@ -41,16 +41,12 @@ class PlaylistController extends Controller
 
     public function update(Request $request, Playlist $playlist, PlaylistService $playlistService): JsonResponse
     {
-        if ($playlist->user_id !== auth()->user()->id) {
-            return response()->json([
-                'message' => 'Only owner can make these changes',
-                'success' => false
-            ], 403);
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
+
+        // only owner can make changes
+        \Gate::authorize('modify', $playlist);
 
         $playlist = $playlistService->updatePlayList($playlist, $request->name);
 
@@ -64,12 +60,9 @@ class PlaylistController extends Controller
     public function destroy(Playlist $playlist): JsonResponse
     {
         try {
-            if ($playlist->user_id !== auth()->user()->id) {
-                return response()->json([
-                    'message' => 'Only owner can make these changes',
-                    'success' => false
-                ], 403);
-            }
+            // only owner can make changes
+            \Gate::authorize('modify', $playlist);
+
             $playlist->songs()->detach();
             $playlist->delete();
 
@@ -98,6 +91,8 @@ class PlaylistController extends Controller
             'song_id' => 'required|exists:songs,id',
         ]);
 
+        \Gate::authorize('modify', $playlist);
+
         $song = Song::findOrFail($request->song_id);
 
         $playlistService->addSongToPlaylist($playlist, $song);
@@ -113,6 +108,8 @@ class PlaylistController extends Controller
         $data = $request->validate([
             'songs_ids' => 'required|array',
         ]);
+
+        \Gate::authorize('modify', $playlist);
 
         $ids = $data['songs_ids'];
 
@@ -130,12 +127,8 @@ class PlaylistController extends Controller
 
     public function removeSong(Playlist $playlist, Song $song, PlaylistService $playlistService): JsonResponse
     {
-        if ($playlist->user_id !== auth()->user()->id) {
-            return response()->json([
-                'message' => 'Only owner can make these changes',
-                'success' => false
-            ], 403);
-        }
+        // only owner can make changes
+        \Gate::authorize('modify', $playlist);
 
         $playlistService->removeSongFromPlaylist($playlist, $song);
 
