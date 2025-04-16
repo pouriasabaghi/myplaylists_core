@@ -134,8 +134,8 @@ class TelegramBotController extends Controller
             if ($this->chatId) {
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    //'text' => "Some thing went wrong. If you think this is a bug contact support please.",
-                    'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
+                    'text' => "Some thing went wrong. If you think this is a bug contact support please.",
+                    //'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
                 ]);
             }
             return;
@@ -188,9 +188,7 @@ class TelegramBotController extends Controller
     public function isKeyboardMessage($messageValue)
     {
         $buttons = [
-            '👤 Support',
-            '🔑 Access',
-            '✈️ Tour',
+            '🇺🇸 Languages',
             '🟣 Application'
         ];
 
@@ -200,19 +198,16 @@ class TelegramBotController extends Controller
     public function keyboardHandler($userEnteredKeyboardButton, $user, $language, TelegramBotService $telegramBotService)
     {
         $buttons = [
-            '👤 Support' => [
-                "text" => "👤 Support: @p_nightwolf",
-            ],
-            '✈️ Tour' => function () use ($telegramBotService, $user) {
+            '🇺🇸 Languages' => function () use ($telegramBotService, $user) {
                 $telegramBotService->sendWelcomeMessage($this->telegram, $this->chatId, $this->account);
             },
-            '🟣 Application'=>[
-                'text' =>__("message.go_to_app_desc", [], $language),
+            '🟣 Application' => [
+                'text' => __("message.go_to_app_desc", [], $language),
                 "reply_markup" => Keyboard::make([
-                    'inline_keyboard' => [
+                    'inline_keyboard' => [2
                         [
                             [
-                                'text' =>__("message.open_app", [], $language),
+                                'text' => __("message.open_app", [], $language),
                                 'url' => config("app.frontend_url")
                             ]
                         ]

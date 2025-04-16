@@ -45,17 +45,11 @@ class TelegramBotService
                 'keyboard' => [
                     [
                         [
+                            'text' => '🇺🇸 Languages',
+                        ],
+                        [
                             'text' => '🟣 Application'
                         ]
-                    ],
-                    [
-                        [
-                            'text' => '👤 Support',
-                        ],
-
-                        [
-                            'text' => '✈️ Tour',
-                        ],
                     ],
                 ],
                 'resize_keyboard' => true,
