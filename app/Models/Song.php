@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Song extends Model
 {
+    use HasFactory;
     protected $fillable = ['duration', 'size', 'cover', 'path', 'name', 'artist', 'album', 'user_id', 'lyrics'];
 
     protected function cover(): Attribute

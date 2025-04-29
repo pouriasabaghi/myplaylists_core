@@ -204,7 +204,7 @@ class TelegramBotController extends Controller
             '🟣 Application' => [
                 'text' => __("message.go_to_app_desc", [], $language),
                 "reply_markup" => Keyboard::make([
-                    'inline_keyboard' => [2
+                    'inline_keyboard' => [
                         [
                             [
                                 'text' => __("message.open_app", [], $language),

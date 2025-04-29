@@ -432,11 +432,11 @@ class TelegramBotService
 
         $songUrl = config('app.app_url') . "/storage/{$song->path}";
 
-        $caption = "<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+        $caption = "<a href='t.me/myplaylists_ir'>🟣MyPlaylists</a>";
 
         if ($song->lyrics) {
             $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8') . "...";
-            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣MyPlaylists</a>";
         }
 
         $params = [

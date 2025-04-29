@@ -14,16 +14,17 @@ class PlaylistResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $cover = $this->songs()->whereNotNull('cover')->get()->last()?->cover;
-        
+        $songsQuery = $this->songs();
+        $cover = $songsQuery->whereNotNull('cover')->orderBy('songs.created_at', 'desc')?->value('cover');
+
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'songs' => $this->songs,
-            'total_songs' => $this->songs->count(),
+            'total_songs' => $songsQuery->count(),
             'cover' => $cover,
-            'isFollowed' => $this->user_id !== auth()->user()->id,
-            'owner_name' =>mb_strimwidth(ucfirst($this->user->name), 0, 10,'...' )
+            'isFollowed' => $this->followers->isNotEmpty(),
+            'isOwner' => $this->user_id !== auth()->user()->id,
+            'owner_name' => mb_strimwidth(ucfirst($this->user->name), 0, 10, '...')
         ];
     }
 }
