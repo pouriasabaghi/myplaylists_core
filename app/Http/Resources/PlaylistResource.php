@@ -20,7 +20,7 @@ class PlaylistResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'total_songs' => $songsQuery->count(),
+            'total_songs' => $this->songs_count,
             'cover' => $cover,
             'isFollowed' => $this->followers->isNotEmpty(),
             'isOwner' => $this->user_id !== auth()->user()->id,

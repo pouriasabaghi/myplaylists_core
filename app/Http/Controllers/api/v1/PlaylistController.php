@@ -145,7 +145,7 @@ class PlaylistController extends Controller
             'top_playlists',
             now()->addDay(),
             fn() =>
-            Playlist::withCount(['followers', 'songs'])
+            Playlist::with(['followers' => fn($q) => $q->where('user_id', auth()->user()->id)])->withCount(['followers', 'songs'])
                 ->having('songs_count', '>=', 5)
                 ->orderByDesc('followers_count')
                 ->take(50)
@@ -157,7 +157,7 @@ class PlaylistController extends Controller
 
     public function getLatestPlaylists()
     {
-        $latestPlaylists = Playlist::with(['followers' => fn($q) => $q->where('user_id', auth()->user()->id)])->orderByDesc('created_at')->take(10)->get();
+        $latestPlaylists = Playlist::with(['followers' => fn($q) => $q->where('user_id', auth()->user()->id)])->withCount('songs')->having('songs_count', '>=', 5)->orderByDesc('created_at')->take(10)->get();
         return response()->json(PlaylistResource::collection($latestPlaylists));
     }
 
