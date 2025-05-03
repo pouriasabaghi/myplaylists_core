@@ -15,7 +15,7 @@ class PlaylistController extends Controller
 {
     public function index()
     {
-        $playlists = auth()->user()->playlists;
+        $playlists = auth()->user()->playlists()->withCount('songs')->get();
         return response()->json(PlaylistResource::collection($playlists));
     }
 

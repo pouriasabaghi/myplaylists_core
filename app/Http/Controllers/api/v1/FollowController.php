@@ -11,8 +11,10 @@ class FollowController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
-        return response()->json( PlaylistResource::collection($user->followedPlaylists));
+        $followedPlaylists = auth()->user()
+            ->followedPlaylists()->withCount('songs')->get();
+            
+        return response()->json(PlaylistResource::collection($followedPlaylists));
     }
     public function toggle(Playlist $playlist)
     {
