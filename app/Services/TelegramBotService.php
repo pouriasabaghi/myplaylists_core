@@ -289,7 +289,7 @@ class TelegramBotService
                 $title .= " - Lyrics";
             }
 
-            $messageText .= "\n<a href='{$song->share_link}'>🟣 Listen In Application</a>";
+            $messageText .= "\n\n🟣 MyPlaylists Music Bot";
 
             $params = [
                 'id' => (string) $song->id,
@@ -304,7 +304,21 @@ class TelegramBotService
                         [
                             ['text' => '🎧 Listen', 'url' => $song->share_link],
                             ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
+                        ],
+                        [
+                            [
+                                'text'=>'🔎 Search & Share Song',
+                                'switch_inline_query_current_chat'=>''
+                            ]
+                        ],
+                        [
+                            [
+                                'text'=>'🟣 Join Channel',
+                                'url'=>'https://t.me/myplaylists_ir'
+                            ]
                         ]
+
+                        
                     ]
                 ])
 
