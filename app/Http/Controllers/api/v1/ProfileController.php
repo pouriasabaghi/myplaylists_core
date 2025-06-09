@@ -4,6 +4,8 @@ namespace App\Http\Controllers\api\v1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use App\Services\ProfileService;
 
 class ProfileController extends Controller
 {
@@ -24,6 +26,56 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
+            'success' => true,
+        ]);
+    }
+
+    public function updateProfileImage(ProfileService $profileService)
+    {
+        $data = request()->validate([
+            'file' => 'required|mimetypes:image/jpeg,image/jpg,image/png,image/webp',
+        ]);
+        $image = $data['file'];
+
+        $user = auth()->user();
+        if ($user->avatar)
+            Storage::disk('public')->delete($user->avatar);
+        
+
+        $path = $profileService->upload($image, 'profiles', 300, 300);
+
+        $user->update([
+            'avatar' => $path,
+        ]);
+
+        return response()->json([
+            'message' => 'Banner updated successfully',
+            'data' => ['avatar' => $path],
+            'success' => true,
+        ]);
+    }
+
+    public function updateBannerImage(ProfileService $profileService)
+    {
+        $data = request()->validate([
+            'file' => 'required|mimetypes:image/jpeg,image/jpg,image/png,image/webp',
+        ]);
+        $image = $data['file'];
+
+        $user = auth()->user();
+        if ($user->banner) 
+            Storage::disk('public')->delete($user->banner);
+        
+
+        $path = $profileService->upload($image, 'banners', 1000, 300);
+
+        $user->update([
+            'banner' => $path,
+        ]);
+
+        return response()->json([
+            'message' => 'Banner updated successfully',
+            'data' => ['banner' => $path],
             'success' => true,
         ]);
     }
