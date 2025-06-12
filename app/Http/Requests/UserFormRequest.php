@@ -26,6 +26,9 @@ class UserFormRequest extends FormRequest
             'email' => 'required|string|email|max:255',
             'role' => 'nullable',
             'telegram_username' => 'nullable',
+            'nickname' => 'nullable',
+            'avatar' => 'nullable',
+            'banner' => 'nullable',
         ];
 
         if ($this->method() === 'POST') {

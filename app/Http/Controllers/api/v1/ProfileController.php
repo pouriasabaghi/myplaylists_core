@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\ProfileService;
+use App\Models\User;
+use App\Http\Resources\UserProfileResource;
 
 class ProfileController extends Controller
 {
@@ -49,7 +51,7 @@ class ProfileController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Banner updated successfully',
+            'message' => 'Avatar updated successfully',
             'data' => ['avatar' => $path],
             'success' => true,
         ]);
@@ -78,5 +80,9 @@ class ProfileController extends Controller
             'data' => ['banner' => $path],
             'success' => true,
         ]);
+    }
+
+    public function showUserProfile(Request $request, User $user){
+        return response()->json(new UserProfileResource($user));
     }
 }

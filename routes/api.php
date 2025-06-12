@@ -5,12 +5,11 @@ use App\Http\Controllers\api\v1\TokenController;
 
 Route::get('/user', fn(Request $request) => [
     ...$request->user()->toArray(),
-    'avatar' => \Illuminate\Support\Facades\Storage::url($request->user()->avatar),
-    'banner' => \Illuminate\Support\Facades\Storage::url($request->user()->banner),
 ])->middleware('auth:sanctum');
 
 Route::prefix('profile')->group(function () {
     Route::put('/', [App\Http\Controllers\api\v1\ProfileController::class, 'update'])->middleware('auth:sanctum');
+    Route::get('/{user}', [App\Http\Controllers\api\v1\ProfileController::class, 'showUserProfile']);
     Route::post('/image', [App\Http\Controllers\api\v1\ProfileController::class, 'updateProfileImage']);
     Route::post('/banner', [App\Http\Controllers\api\v1\ProfileController::class, 'updateBannerImage']);
 });
