@@ -17,6 +17,7 @@ class ProfileController extends Controller
             'name' => 'required|string|max:255',
             'nickname' => 'nullable|string|max:255',
             'telegram_username' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9_@]+$/'],
+            'bio' => 'nullable|string',
         ]);
 
         $data['name'] = strtolower($data['name']);
