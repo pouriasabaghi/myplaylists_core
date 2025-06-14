@@ -18,6 +18,7 @@ class UserProfileResource extends JsonResource
             'name'=>$this->nickname ?: $this->name,
             'avatar'=>$this->avatar,
             'banner'=>$this->banner,
+            'bio'=>$this->bio,
             'latest_playlists'=>PlaylistResource::collection($this->playlists()->withCount('songs')->latest()->take(16)->get()),
             'latest_songs'=>SongResource::collection($this->songs()->latest()->take(20)->get()),
         ];

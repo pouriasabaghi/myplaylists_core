@@ -24,11 +24,12 @@ class UserFormRequest extends FormRequest
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
-            'role' => 'nullable',
-            'telegram_username' => 'nullable',
-            'nickname' => 'nullable',
-            'avatar' => 'nullable',
-            'banner' => 'nullable',
+            'role' => 'nullable|string',
+            'telegram_username' => 'nullable|string',
+            'nickname' => 'nullable|string',
+            'avatar' => 'nullable|string',
+            'banner' => 'nullable|string',
+            'bio'=>'nullable|string'
         ];
 
         if ($this->method() === 'POST') {

@@ -28,7 +28,8 @@ class User extends Authenticatable
         'language',
         'nickname',
         'avatar',
-        'banner'
+        'banner',
+        'bio',
     ];
 
     /**
