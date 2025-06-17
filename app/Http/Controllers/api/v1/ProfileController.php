@@ -70,7 +70,7 @@ class ProfileController extends Controller
             Storage::disk('public')->delete($user->banner);
         
 
-        $path = $profileService->upload($image, 'banners', 1000, 300);
+        $path = $profileService->upload($image, 'banners', 1200, 300);
 
         $user->update([
             'banner' => $path,
