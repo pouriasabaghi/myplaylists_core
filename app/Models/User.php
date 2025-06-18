@@ -103,16 +103,29 @@ class User extends Authenticatable
         return ($currentSize + $fileSize) <= $maxUploadSize;
     }
 
-    public function avatar():Attribute{
+    public function avatar(): Attribute
+    {
         return Attribute::make(
             get: fn($value) => $value ? url(\Illuminate\Support\Facades\Storage::url($value)) : null
         );
     }
 
-    public function banner():Attribute{
+    public function banner(): Attribute
+    {
         return Attribute::make(
             get: fn($value) => $value ? url(\Illuminate\Support\Facades\Storage::url($value)) : null
         );
     }
 
+    public function subscriptions()
+    {
+        return $this->belongsToMany(User::class, 'subscription_user', 'subscriber_id', 'subscribed_id')
+            ->withTimestamps();
+    }
+
+    public function subscribers()
+    {
+        return $this->belongsToMany(User::class, 'subscription_user', 'subscribed_id', 'subscriber_id')
+            ->withTimestamps();
+    }
 }

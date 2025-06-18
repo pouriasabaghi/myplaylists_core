@@ -66,3 +66,10 @@ Route::prefix('artists')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [App\Http\Controllers\api\v1\ArtistController::class, 'index']);
     Route::get('/{artistName}', [App\Http\Controllers\api\v1\ArtistController::class, 'getSongs']);
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/subscriptions', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscriptions']);
+    Route::get('/subscribers', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscribers']);
+    Route::post('subscribers/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subAndUnsubscribeUser']);
+}); 
+
