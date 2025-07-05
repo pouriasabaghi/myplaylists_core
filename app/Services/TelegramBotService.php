@@ -35,7 +35,7 @@ class TelegramBotService
     {
         TelegramUser::updateOrCreate(
             ['chat_id' => $chatId],
-            ['username' => $account->username]
+            ['username' => $account->username, 'telegram_id'=> $account->getId()]
         );
 
         $telegram->sendMessage([
