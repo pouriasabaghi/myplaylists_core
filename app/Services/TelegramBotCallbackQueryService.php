@@ -72,6 +72,7 @@ class TelegramBotCallbackQueryService
         }
 
         $playlist->songs()->attach($song);
+        (new \App\Services\PlaylistService())->notifyFollowers($playlist);
         $telegram->sendMessage([
             'chat_id' => $chatId,
             'text' => __('message.song_added_to_playlist', [], $user->language),

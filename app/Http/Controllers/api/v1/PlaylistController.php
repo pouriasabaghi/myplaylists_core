@@ -97,6 +97,8 @@ class PlaylistController extends Controller
 
         $playlistService->addSongToPlaylist($playlist, $song);
 
+        $playlistService->notifyFollowers($playlist);
+
         return response()->json([
             'message' => 'Song added to playlist successfully',
             'success' => true,

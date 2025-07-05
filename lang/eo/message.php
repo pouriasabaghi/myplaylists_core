@@ -23,5 +23,8 @@ return [
     "request_outdated"=>"🦦 Via peto estas neĝisdata. Bonvolu serĉi denove.",
     "invalid_request"=>"⛔️ Via peto estas nevalida. Se vi opinias, ke ĉi tio estas eraro, bonvolu kontakti subtenon.",
     "open_app"=>"Malfermu aplikaĵon",
-    "go_to_app_desc" => "🟣 Klaku la suban ligilon por eniri la retan aplikaĵon MyPlaylists 👇"
+    "go_to_app_desc" => "🟣 Klaku la suban ligilon por eniri la retan aplikaĵon MyPlaylists 👇",
+    "playlist_updated_subject" => "🎉 Nova kanto estis aldonita de :playlistOwner al la ludlisto :playlistName, kiun vi sekvas.",
+    "playlist_updated_message" => "👇 Ne maltrafu la novajn kantojn",
+    "view" => "Vidi",
 ];

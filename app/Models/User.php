@@ -128,4 +128,8 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'subscription_user', 'subscribed_id', 'subscriber_id')
             ->withTimestamps();
     }
+
+    public function telegram(){
+        return $this->hasOne(TelegramUser::class, 'telegram_id', 'telegram_id');
+    }
 }

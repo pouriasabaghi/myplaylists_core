@@ -23,5 +23,8 @@ return [
     "request_outdated"=>"🦦 Your request is outdated. Please search again",
     "invalid_request"=>"⛔️ Your request is invalid, If you think this is wrong please contact support.",
     "open_app"=>"Open Application",
-    "go_to_app_desc"=>"🟣 MyPlaylists also have web application, Click link below 👇"
+    "go_to_app_desc"=>"🟣 MyPlaylists also have web application, Click link below 👇",
+    "playlist_updated_subject" => "🎉 A new song was added by :playlistOwner to the playlist :playlistName you’re following.",
+    "playlist_updated_message" => "👇 Don’t miss the new songs",
+    "view" => "View",
 ];
