@@ -27,9 +27,9 @@ class SubscriptionController extends Controller
         $subscriber = auth()->user();
         $subscribed = $user;
 
-        if($subscriber->id === $subscribed->id)
+        if ($subscriber->id === $subscribed->id)
             return response()->json(['message' => 'You cannot subscribe to yourself'], 400);
-        
+
 
         if ($this->subscriptionService->isSubscribed($subscriber, $subscribed)) {
             $this->subscriptionService->unsubscribe($subscriber, $subscribed);
@@ -41,4 +41,12 @@ class SubscriptionController extends Controller
 
         return response()->json(['message' => $message]);
     }
+
+    public function isSubscribe(User $user)
+    {
+        $subscriber = auth()->user();
+        $subscribed = $user;
+        return $this->subscriptionService->isSubscribed($subscriber, $subscribed);
+    }
+
 }
