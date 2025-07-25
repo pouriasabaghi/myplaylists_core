@@ -71,6 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscriptions', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscriptions']);
     Route::get('/subscribers', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscribers']);
     Route::post('/subscribers/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subAndUnsubscribeUser']);
-    Route::post('/is-subscribe/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'isSubscribe']);
+    Route::get('/is-subscribe/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'isSubscribe']);
 }); 
 
