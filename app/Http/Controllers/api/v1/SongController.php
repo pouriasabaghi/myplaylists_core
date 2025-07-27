@@ -7,8 +7,11 @@ use App\Http\Resources\SongResource;
 use App\Models\Song;
 use App\Services\SongService;
 use Illuminate\Http\Request;
-use Storage;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Telegram\Bot\Laravel\Facades\Telegram;
+use Illuminate\Support\Str;
+use App\Services\TelegramBotService;
+use Telegram\Bot\Keyboard\Keyboard;
 
 
 class SongController extends Controller
@@ -88,7 +91,7 @@ class SongController extends Controller
             ]);
         } catch (\Throwable $th) {
             return response()->json([
-                'message' =>$th?->getCode() === 500 ? 'An error occurred' : $th->getMessage(),
+                'message' => $th?->getCode() === 500 ? 'An error occurred' : $th->getMessage(),
                 'error' => $th->getMessage(),
                 'success' => false,
             ], 500);
@@ -171,6 +174,50 @@ class SongController extends Controller
     public function getLatestSongs()
     {
         $latestSong = Song::orderByDesc('created_at')->take(30)->get();
-        return response()->json($latestSong);
+        return response()->json(SongResource::collection($latestSong));
+    }
+
+    public function sendSongToTelegramChannel(Request $request, TelegramBotService $telegramBotService)
+    {
+        try {
+            $telegram = Telegram::bot('mybot');
+
+            $channel = auth()->user()->telegram_channel;
+            $channel = "-1001647459384";
+
+            $chatId = Str::startsWith($channel, '-') ? $channel : "@$channel";
+
+            switch ($request->type) {
+                case 'file':
+                    $telegramBotService->sendSongToTelegram(
+                        $telegram,
+                        $chatId,
+                        $request->song_id,
+                    );
+                    break;
+
+                case 'text':
+                    $params = $telegramBotService->generateSendSongToBotParams(
+                        $request->song_id,
+                        'text',
+                        ['chat_id' => $chatId]
+                    );
+                    $telegram->sendMessage($params);
+                    break;
+
+                default:
+                    abort(400, 'Invalid type provided.');
+            }
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => $th->getCode() === 500 ? 'An error occurred' : $th->getMessage(),
+                'error' => $th->getMessage(),
+                'success' => false,
+            ], 500);
+        }
+
+
+
     }
 }
