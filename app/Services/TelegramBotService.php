@@ -453,10 +453,10 @@ class TelegramBotService
             $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
         }
 
-/*         if(auth()->check()){
-            $profileUrl  = config('app.frontend_url') . "/profile/" . auth()->user()->id;
-            $caption.= "\n\n<a href='$profileUrl'>👤 Subscribe</a>";
-        } */
+        /*         if(auth()->check()){
+                    $profileUrl  = config('app.frontend_url') . "/profile/" . auth()->user()->id;
+                    $caption.= "\n\n<a href='$profileUrl'>👤 Subscribe</a>";
+                } */
 
         $params = [
             'chat_id' => $chatId,
@@ -468,7 +468,7 @@ class TelegramBotService
         $params['title'] = $song->name;
         $params['performer'] = $song->artist;
         $params['thumb'] = InputFile::create($song->cover);
-        $telegram->sendAudio($params);
+        return $telegram->sendAudio($params);
     }
 
     public function getSongFromEnteredResourceUrl($telegram, $chatId, $message)
@@ -636,7 +636,7 @@ class TelegramBotService
                 'chat_id' => $chatId,
                 'audio' => InputFile::create($downloadedFile),
                 'thumb' => InputFile::create("https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png"),
-                'caption' => "[🟣 Myplaylists](https://t.me/myplaylists_ir)",
+                'caption' => "[🟣 MyPlaylists](https://t.me/myplaylists_ir)",
                 'parse_mode' => 'Markdown'
             ];
             $telegram->sendAudio($params);
@@ -654,51 +654,88 @@ class TelegramBotService
     public function generateSendSongToBotParams($song_id, $type = "file", $additionalParams = [])
     {
         $song = Song::firstWhere('id', $song_id);
-        
+        $params = [];
         if ($type === "file") {
 
         }
 
-        if ($type === "text") {
+        if ($type === "lyrics") {
+            $songUrl = config('app.app_url') . "/storage/{$song->path}";
+            $caption = "<a href='t.me/myplaylists_ir'>🟣MyPlaylists</a>";
+
+            $params['audio'] = InputFile::create($songUrl);
+            $params['title'] = $song->name;
+            $params['performer'] = $song->artist;
+            $params['thumb'] = InputFile::create($song->cover);
+            $params['caption'] = $caption;
+            $params['parse_mode'] = 'HTML';
+            $params['_lyrics'] = $song->lyrics;
+        }
+
+        if ($type === "banner") {
             $album = $song->album ?? 'unknwon';
             $artist = $song->artist ?? 'unknown';
             $title = $song->name;
             $messageText = "🎧 <strong>{$song->name}</strong> \n🗣 $artist  \n💽 $album";
 
-            // add songs lyrics to message response
-            if ($song->lyrics) {
-                $messageText .= "<blockquote expandable>{$song->lyrics}</blockquote>";
-                $title .= " - Lyrics";
-            }
+            if ($song->cover) {
+                $caption = "<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+                if ($song->lyrics) {
+                    $lyrics = mb_substr($song->lyrics, 0, 900, 'utf-8') . "...";
+                    $caption = "$messageText\n<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
+                }
 
-            $messageText .= "\n\n🟣 MyPlaylists Music Bot";
-
-            $params = [
-                'parse_mode' => 'HTML',
-                'text' => $messageText,
-                'reply_markup' => Keyboard::make([
-                    'inline_keyboard' => [
-                        [
-                            ['text' => '🎧 Listen', 'url' => $song->share_link],
-                            ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
-                        ],
-                        [
+                $params = [
+                    'photo' => InputFile::create($song->cover), // local path or URL
+                    'caption' => $caption,
+                    'parse_mode' => 'HTML',
+                    'reply_markup' => Keyboard::make([
+                        'inline_keyboard' => [
                             [
-                                'text' => '🟣 Join Channel',
-                                'url' => 'https://t.me/myplaylists_ir'
+                                ['text' => '🎧 Listen', 'url' => $song->share_link],
+                                ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
+                            ],
+                            [
+                                [
+                                    'text' => '🟣 Join Channel',
+                                    'url' => 'https://t.me/myplaylists_ir'
+                                ]
                             ]
                         ]
+                    ])
+                ];
+            } else {
+                    // add songs lyrics to message response
+                if ($song->lyrics) {
+                    $messageText .= "<blockquote expandable>{$song->lyrics}</blockquote>";
+                    $title .= " - Lyrics";
+                }
+                $messageText .= "\n\n🟣 MyPlaylists Music Bot";
+                $params = [
+                    'parse_mode' => 'HTML',
+                    'text' => $messageText,
+                    'reply_markup' => Keyboard::make([
+                        'inline_keyboard' => [
+                            [
+                                ['text' => '🎧 Listen', 'url' => $song->share_link],
+                                ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
+                            ],
+                            [
+                                [
+                                    'text' => '🟣 Join Channel',
+                                    'url' => 'https://t.me/myplaylists_ir'
+                                ]
+                            ]
 
 
-                    ]
-                ])
+                        ]
+                    ])
 
-            ];
-            $params['thumb_url'] = $song->cover ?: "https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png";
-
+                ];
+            }
         }
-        
-        
+
+
         $params = array_merge($params, $additionalParams);
 
         return $params;

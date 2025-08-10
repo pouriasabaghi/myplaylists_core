@@ -201,13 +201,36 @@ class SongController extends Controller
                     );
                     break;
 
-                case 'text':
+                case 'lyrics':
                     $params = $telegramBotService->generateSendSongToBotParams(
                         $request->song_id,
-                        'text',
+                        'lyrics',
+                        ['chat_id' => $chatId,]
+                    );
+
+                    $lyrics = $params['_lyrics'];
+                    unset($params['_lyrics']);
+
+                    $message = $telegram->sendAudio($params);
+                    if (!empty($lyrics)) {
+                        $telegram->sendMessage([
+                            'text' => "$lyrics",
+                            'chat_id' => $chatId,
+                            'reply_to_message_id' => $message->getMessageId(),
+                        ]);
+                    }
+                    break;
+                case 'banner':
+                    $params = $telegramBotService->generateSendSongToBotParams(
+                        $request->song_id,
+                        'banner',
                         ['chat_id' => $chatId]
                     );
-                    $telegram->sendMessage($params);
+                    if(!empty($params['photo'])){
+                        $telegram->sendPhoto($params);
+                    }else{
+                        $telegram->sendMessage($params);
+                    }
                     break;
 
                 default:
