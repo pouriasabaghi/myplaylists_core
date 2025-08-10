@@ -38,6 +38,11 @@ class TelegramBotController extends Controller
     public function handle(TelegramBotService $telegramBotService, SongService $songService, AiInterface $aiService)
     {
         try {
+            // ignore messages from channels
+            if ($this->message && $this->message->getChat()?->getType() === 'channel') {
+                return;
+            }
+
             // user sended message value
             $messageValue = $this->message->getText();
 
@@ -134,8 +139,8 @@ class TelegramBotController extends Controller
             if ($this->chatId) {
                 $this->telegram->sendMessage([
                     'chat_id' => $this->chatId,
-                    'text' => "Some thing went wrong. If you think this is a bug contact support please.",
-                    //'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
+                    //'text' => "Some thing went wrong. If you think this is a bug contact support please.",
+                    'text' => $th->getMessage() . " - " . $th->getLine() . $th->getFile(),
                 ]);
             }
             return;

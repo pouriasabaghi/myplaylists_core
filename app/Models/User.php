@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'telegram_username',
         'telegram_id',
+        'telegram_channel',
         'role',
         'language',
         'nickname',
@@ -117,6 +118,13 @@ class User extends Authenticatable
         );
     }
 
+    public function is_premium(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value, $attributes) => in_array($attributes['role'], ['artist', 'premium', 'admin']),
+        );
+    }
+
     public function subscriptions()
     {
         return $this->belongsToMany(User::class, 'subscription_user', 'subscriber_id', 'subscribed_id')
@@ -129,7 +137,8 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    public function telegram(){
+    public function telegram()
+    {
         return $this->hasOne(TelegramUser::class, 'telegram_id', 'telegram_id');
     }
 }

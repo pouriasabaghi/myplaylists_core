@@ -29,7 +29,8 @@ class UserFormRequest extends FormRequest
             'nickname' => 'nullable|string',
             'avatar' => 'nullable|string',
             'banner' => 'nullable|string',
-            'bio'=>'nullable|string'
+            'bio'=>'nullable|string',
+            'telegram_channel'=>'nullable|string'
         ];
 
         if ($this->method() === 'POST') {

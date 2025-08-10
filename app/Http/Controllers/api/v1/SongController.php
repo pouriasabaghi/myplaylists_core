@@ -183,7 +183,12 @@ class SongController extends Controller
             $telegram = Telegram::bot('mybot');
 
             $channel = auth()->user()->telegram_channel;
-            $channel = "-1001647459384";
+
+            if (empty($channel)) {
+                return response()->json([
+                    'message' => 'Make sure you have set your Telegram channel first',
+                ], 400);
+            }
 
             $chatId = Str::startsWith($channel, '-') ? $channel : "@$channel";
 
@@ -209,11 +214,14 @@ class SongController extends Controller
                     abort(400, 'Invalid type provided.');
             }
 
+            return response()->json([
+                'message' => 'Song sent to Telegram channel successfully',
+            ]);
+
         } catch (\Throwable $th) {
             return response()->json([
                 'message' => $th->getCode() === 500 ? 'An error occurred' : $th->getMessage(),
                 'error' => $th->getMessage(),
-                'success' => false,
             ], 500);
         }
 

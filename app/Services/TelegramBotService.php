@@ -35,7 +35,7 @@ class TelegramBotService
     {
         TelegramUser::updateOrCreate(
             ['chat_id' => $chatId],
-            ['username' => $account->username, 'telegram_id'=> $account->getId()]
+            ['username' => $account->username, 'telegram_id' => $account->getId()]
         );
 
         $telegram->sendMessage([
@@ -307,18 +307,18 @@ class TelegramBotService
                         ],
                         [
                             [
-                                'text'=>'🔎 Search & Share Song',
-                                'switch_inline_query_current_chat'=>''
+                                'text' => '🔎 Search & Share Song',
+                                'switch_inline_query_current_chat' => ''
                             ]
                         ],
                         [
                             [
-                                'text'=>'🟣 Join Channel',
-                                'url'=>'https://t.me/myplaylists_ir'
+                                'text' => '🟣 Join Channel',
+                                'url' => 'https://t.me/myplaylists_ir'
                             ]
                         ]
 
-                        
+
                     ]
                 ])
 
@@ -450,8 +450,13 @@ class TelegramBotService
 
         if ($song->lyrics) {
             $lyrics = mb_substr($song->lyrics, 0, 1000, 'utf-8') . "...";
-            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣MyPlaylists</a>";
+            $caption = "<blockquote expandable>$lyrics</blockquote>\n<a href='t.me/myplaylists_ir'>🟣 MyPlaylists</a>";
         }
+
+/*         if(auth()->check()){
+            $profileUrl  = config('app.frontend_url') . "/profile/" . auth()->user()->id;
+            $caption.= "\n\n<a href='$profileUrl'>👤 Subscribe</a>";
+        } */
 
         $params = [
             'chat_id' => $chatId,
@@ -463,7 +468,6 @@ class TelegramBotService
         $params['title'] = $song->name;
         $params['performer'] = $song->artist;
         $params['thumb'] = InputFile::create($song->cover);
-
         $telegram->sendAudio($params);
     }
 
@@ -645,5 +649,58 @@ class TelegramBotService
                 'text' => "Failed to download audio. This happen due on of this:\nFile is too big.\nURL is not valid.\nDue some region restrictions.\nIf you thing this is a but please contact support",
             ]);
         }
+    }
+
+    public function generateSendSongToBotParams($song_id, $type = "file", $additionalParams = [])
+    {
+        $song = Song::firstWhere('id', $song_id);
+        
+        if ($type === "file") {
+
+        }
+
+        if ($type === "text") {
+            $album = $song->album ?? 'unknwon';
+            $artist = $song->artist ?? 'unknown';
+            $title = $song->name;
+            $messageText = "🎧 <strong>{$song->name}</strong> \n🗣 $artist  \n💽 $album";
+
+            // add songs lyrics to message response
+            if ($song->lyrics) {
+                $messageText .= "<blockquote expandable>{$song->lyrics}</blockquote>";
+                $title .= " - Lyrics";
+            }
+
+            $messageText .= "\n\n🟣 MyPlaylists Music Bot";
+
+            $params = [
+                'parse_mode' => 'HTML',
+                'text' => $messageText,
+                'reply_markup' => Keyboard::make([
+                    'inline_keyboard' => [
+                        [
+                            ['text' => '🎧 Listen', 'url' => $song->share_link],
+                            ['text' => '📥 Download', 'url' => "https://t.me/Myplaylists_ir_Bot?start=sendSongToTelegram_{$song->id}"]
+                        ],
+                        [
+                            [
+                                'text' => '🟣 Join Channel',
+                                'url' => 'https://t.me/myplaylists_ir'
+                            ]
+                        ]
+
+
+                    ]
+                ])
+
+            ];
+            $params['thumb_url'] = $song->cover ?: "https://myplaylists.ir/assets/no-cover-logo-B8RP5QBr.png";
+
+        }
+        
+        
+        $params = array_merge($params, $additionalParams);
+
+        return $params;
     }
 }

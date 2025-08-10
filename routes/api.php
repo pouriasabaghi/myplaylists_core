@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\v1\TokenController;
 
 Route::get('/user', fn(Request $request) => [
+    'is_premium' => in_array($request->user()->role, ['artist', 'premium', 'admin']),
     ...$request->user()->toArray(),
 ])->middleware('auth:sanctum');
 
@@ -29,6 +30,7 @@ Route::prefix('songs')->group(function () {
     Route::get('/{song}', [\App\Http\Controllers\api\v1\SongController::class, 'show']);
     Route::get('/{id}/stream', [\App\Http\Controllers\api\v1\SongController::class, 'stream']);
     Route::get('/{id}/download', [\App\Http\Controllers\api\v1\SongController::class, 'download']);
+    Route::post('/send-to', [\App\Http\Controllers\api\v1\SongController::class, 'sendSongToTelegramChannel']);
 });
 
 Route::get('/favorites', [\App\Http\Controllers\api\v1\FavoriteController::class, 'index'])->middleware('auth:sanctum');
@@ -72,5 +74,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscribers', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscribers']);
     Route::post('/subscribers/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subAndUnsubscribeUser']);
     Route::get('/is-subscribe/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'isSubscribe']);
-}); 
+});
 
