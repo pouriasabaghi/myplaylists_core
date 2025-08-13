@@ -49,4 +49,14 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->isSubscribed($subscriber, $subscribed);
     }
 
+    public function getUserSubscribers(User $user)
+    {
+        return response()->json($user->subscribers);
+    }
+
+    public function getUserSubscriptions(User $user)
+    {
+        return response()->json($user->subscriptions);
+    }
+
 }

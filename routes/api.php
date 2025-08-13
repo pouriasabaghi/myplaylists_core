@@ -72,7 +72,11 @@ Route::prefix('artists')->middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscriptions', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscriptions']);
     Route::get('/subscribers', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subscribers']);
+    Route::get('/subscribers/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'getUserSubscribers']);
+    Route::get('/subscription/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'getUserSubscriptions']);
+
     Route::post('/subscribers/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'subAndUnsubscribeUser']);
+
     Route::get('/is-subscribe/{user}', [App\Http\Controllers\api\v1\SubscriptionController::class, 'isSubscribe']);
 });
 
