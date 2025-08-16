@@ -51,7 +51,17 @@ class SubscriptionController extends Controller
 
     public function getUserSubscribers(User $user)
     {
-        return response()->json($user->subscribers);
+        $authUser = auth()->user();
+
+        $subscribers = $user->subscribers()
+            ->withExists([
+                'subscriptions as subscribed' => function ($q) use ($authUser) {
+                    $q->where('subscriber_id', $authUser->id);
+                }
+            ])
+            ->get();
+
+        return response()->json($subscribers);
     }
 
     public function getUserSubscriptions(User $user)
